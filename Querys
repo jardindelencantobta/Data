@@ -1,3 +1,13 @@
+-- =====================================================================
+-- SISACFO - PROVEEDOR - Muestra de los 100 registros más recientes
+-- para validación del usuario final.
+-- Cambios frente a la versión original:
+--   * TP.COD_CODIGO calificado y movido al ON del join (evita ambigüedad
+--     y mantiene el LEFT JOIN como outer real)
+--   * ORDER BY con NULLS LAST (en Oracle, DESC pone los NULL primero) y
+--     desempate por PROV_DOCUMENTO para que el resultado sea repetible
+--   * Campo FECHA_REFERENCIA para que el usuario vea por qué entró cada fila
+-- =====================================================================
 SELECT
        P.PROV_DOCUMENTO,
        P.PROV_TIPO_DOC,
@@ -124,7 +134,8 @@ SELECT
        PR.PRETI_APLICA    AS RETENCION_IVA_APLICA,
        PR.PRETI_RETICA    AS RETENCION_IVA_RETICA,
        AC.ACRE_CODIGO     AS ACTIVIDAD_CREE_CODIGO,
-       AC.ACRE_CONCEPTO   AS ACTIVIDAD_CREE_DESCRIPCION
+       AC.ACRE_CONCEPTO   AS ACTIVIDAD_CREE_DESCRIPCION,
+       NVL(P.PROV_FECHA_ACTUALIZA, P.PROV_SYSDATE) AS FECHA_REFERENCIA
 FROM SISACFO.PROVEEDOR P
 LEFT OUTER JOIN SISACFO.PAIS PA
        ON PA.PAI_CODIGO = P.PAI_CODIGO
@@ -140,9 +151,26 @@ LEFT OUTER JOIN SISACFO.PROV_RET_IVA PR
 LEFT OUTER JOIN SISACFO.TSS_IMP_ACTI_CREE AC
        ON AC.ACRE_CONSECU = P.ACRE_CONSECU
 LEFT OUTER JOIN SISACFO.CODIGOS TP
-ON TP.COD_ITEM = P.PROV_TIPO_DOC
-AND COD_CODIGO = 'TDI'
-ORDER BY NVL(P.PROV_FECHA_ACTUALIZA,
-             P.PROV_SYSDATE) DESC
+       ON TP.COD_CODIGO = 'TDI'
+      AND TP.COD_ITEM   = P.PROV_TIPO_DOC
+ORDER BY NVL(P.PROV_FECHA_ACTUALIZA, P.PROV_SYSDATE) DESC NULLS LAST,
+         P.PROV_DOCUMENTO
 FETCH FIRST 100 ROWS ONLY;
 
+-- ---------------------------------------------------------------------
+-- Control: los joins no deben multiplicar filas.
+-- Ambos conteos deben ser iguales. Si difieren, algún catálogo tiene
+-- más de una fila por llave y la muestra saldría con duplicados.
+-- ---------------------------------------------------------------------
+SELECT
+  (SELECT COUNT(*) FROM SISACFO.PROVEEDOR) AS filas_proveedor,
+  (SELECT COUNT(*)
+     FROM SISACFO.PROVEEDOR P
+     LEFT OUTER JOIN SISACFO.PAIS PA ON PA.PAI_CODIGO = P.PAI_CODIGO
+     LEFT OUTER JOIN SISACFO.DEPTOS D ON D.PAI_CODIGO = P.PAI_CODIGO AND D.DEP_CODIGO = P.DEP_CODIGO
+     LEFT OUTER JOIN SISACFO.MUNICIPIOS M ON M.PAI_CODIGO = P.PAI_CODIGO AND M.DEP_CODIGO = P.DEP_CODIGO AND M.MUN_CODIGO = P.MUN_CODIGO
+     LEFT OUTER JOIN SISACFO.PROV_RET_IVA PR ON PR.PRETI_CODIGO = P.PRETI_CODIGO
+     LEFT OUTER JOIN SISACFO.TSS_IMP_ACTI_CREE AC ON AC.ACRE_CONSECU = P.ACRE_CONSECU
+     LEFT OUTER JOIN SISACFO.CODIGOS TP ON TP.COD_CODIGO = 'TDI' AND TP.COD_ITEM = P.PROV_TIPO_DOC
+  ) AS filas_con_joins
+FROM dual;
