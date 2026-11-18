@@ -24,12 +24,485 @@ WHERE owner = 'SISACFO'
                      'TSS_ORD_APROB_COMPRA','TSS_ORD_DETA_REQUISITOS','TSS_ORDENES_ING_DIRECTOS')
 ORDER BY table_name, column_name;
 
+Respuesta
+DETA_COMPRA	CLAP_PRODUCTO	Tipo clasificacion de bienes (Act-Inv-Gasto)
+DETA_COMPRA	DCOM_CANTIDAD	Cantidad a comprar de cada item
+DETA_COMPRA	DCOM_DESC_PROV	Descripcion del proveedor a su producto
+DETA_COMPRA	DCOM_ESTADO	Suma de recepciones parciales o totales por compra
+DETA_COMPRA	DCOM_FICHA_TECNICA	Ficha tecnica del detalle de la compra
+DETA_COMPRA	DCOM_FORMA_PAGO	tipos de formas de pagos
+DETA_COMPRA	DCOM_GARANTIA	Garantia del producto
+DETA_COMPRA	DCOM_LINEA	Numero de linea en la orden de compra
+DETA_COMPRA	DCOM_PREC_UNIT	Precio unitario del item calculado de precio de acuerdo a la cantidad
+DETA_COMPRA	DCOM_TIEMPO_ENTREGA	Numero de dias para la entrega
+DETA_COMPRA	DCOT_FORMA_PAGO	tipos de formas de pagos
+DETA_COMPRA	DCOT_LINEA	Numero de linea de la cotizacion
+DETA_COMPRA	ECOM_CONSECU	Numero de la orden de compra
+DETA_COMPRA	ECOT_CONSECU	Numero interno de la cotizacion
+DETA_COMPRA	GENE_PRODUCTO	Familia de elementos (Mesas-Sillas)
+DETA_COMPRA	GRUP_PRODUCTO	Clasif dentro del anterior (Muebles-Inmuebles)
+DETA_COMPRA	IVA_TIPO	Tipo de iva a aplicar
+DETA_COMPRA	PROD_CODIGO	Codigo del elemento
+DETA_COMPRA	RET_TIPO	Tipo de RETENCION a aplicar
+DETA_COMPRA	UNI_CODIGO	Codigo de la unidad a comprar
+DETA_FACTURA	CLAP_PRODUCTO	Clasificacion del producto
+DETA_FACTURA	COD_ITEM_PDC	Codigo del tipo de descuento comercial aplicado
+DETA_FACTURA	DCOT_FORMA_PAGO	tipos de formas de pagos 
+DETA_FACTURA	DFAC_CANTIDAD	Cantidad que el proveedor envia por item
+DETA_FACTURA	DFAC_DESCTO_FIN	Valor del descuento financiero para la linea de la factura
+DETA_FACTURA	DFAC_ESTADO	Valor o suma (de valores parciales) que han sido pagos a esta factura
+DETA_FACTURA	DFAC_ITEM	Numero de linea por detalle de la factura
+DETA_FACTURA	DFAC_LINEA	Control interno por detalle de la factura
+DETA_FACTURA	DFAC_VALOR	Valor por unidad del bien
+DETA_FACTURA	EFAC_CONSECU	Numero de la factura para el proveedor
+DETA_FACTURA	GENE_PRODUCTO	Genero dentro del grupo
+DETA_FACTURA	GRUP_PRODUCTO	Grupo dentro de la clase
+DETA_FACTURA	IVA_TIPO	Tipo de iva aplicado al producto
+DETA_FACTURA	PROD_CODIGO	Codificacion dentro de los generos
+DETA_FACTURA	RET_TIPO	Tipo retncion aplicado al producto
+DETA_FACTURA	UNI_CODIGO	Codigo de la unidad
+DETA_INGRESO	CC1_CODIGO	Tercer nivel de centro de costo
+DETA_INGRESO	CC2_CODIGO	Cuarto nivel de centro de costo
+DETA_INGRESO	CC3_CODIGO	Quinto nivel de centro de costo
+DETA_INGRESO	CC4_CODIGO	Sexto nivel de centro de costo
+DETA_INGRESO	CDEN_LINEA	Número de línea del detalle de la entrega del contrato
+DETA_INGRESO	CLAP_PRODUCTO	Clasificacion del producto
+DETA_INGRESO	DCOM_LINEA	Consecutivo de detalle de la orden de compra
+DETA_INGRESO	DENT_LINEA	Numero de linea del detalle de la entrega de la orden de compra
+DETA_INGRESO	DING_CANT_CONV	Cantidad segun la unidad de conversion
+DETA_INGRESO	DING_CANTIDAD	Cantidad ingresada o recibida a satisfaccion en las unidades del proveedor
+DETA_INGRESO	DING_COSTO	Indica inclusion de costos adicionales
+DETA_INGRESO	DING_FICHA_TECNICA	Ficha tecnica del detalle del  ingreso
+DETA_INGRESO	DING_ITEM	Numero de linea para presentacion
+DETA_INGRESO	DING_LINEA	Numero consecutivo de items de ingreso
+DETA_INGRESO	DING_VLR_CONV	Valor segun la unidad de conversion
+DETA_INGRESO	DING_VLR_UNIDAD	Valor unitario del producto o servicio
+DETA_INGRESO	DING_VLR_UNI_SINIVA	Valor unitario sin IVA
+DETA_INGRESO	ECOM_CONSECU	Consecutivo de la orden de compra
+DETA_INGRESO	EING_CONSECU	Numero del encabezado de ingreso
+DETA_INGRESO	EMPR_CONSECU	Primer nivel de centro de costo
+DETA_INGRESO	GENE_PRODUCTO	Genero dentro del grupo
+DETA_INGRESO	GRUP_PRODUCTO	Grupo dentro de la clase
+DETA_INGRESO	INFO_PLACA	Numero de placa cuando el valor de ingreso debe llevar
+DETA_INGRESO	INV_CONSECU	Numero Consecutivo que identifica el inventario
+DETA_INGRESO	OBRA_CONSECU	Consecutivo de obra en el caso de que el ingreso sea derivado del modulo de arquitectura
+DETA_INGRESO	PROD_CODIGO	Codificacion dentro de los generos
+DETA_INGRESO	REGI_CONSECU	Segundo nivel de centro de costo
+DETA_INGRESO	UNI_CODIGO	Codigo de la unidad para conversion
+DETA_PEDIDO	CLAP_PRODUCTO	Tipo clasif/cion de los bienes (Act-Inv-Gas)
+DETA_PEDIDO	DPED_CANT_PROMEDIO_DESP	Cantidad de consumo mensual promedio o de despachos promedio mensual al centro de costos solicitante
+DETA_PEDIDO	DPED_EXISTENCIA_CC_SOLI	Cantidad existente en el centro de costos solicitante
+DETA_PEDIDO	DPED_FICHA_TECNICA	Campo descriptivo de ficha tecnica del elemento solicitado ej:Gramaje, tipo papel ,Nro de tintas, Medidas, Color, etc..
+DETA_PEDIDO	DREQ_CANTAPROB	Cantidad aprobada por cada item
+DETA_PEDIDO	DREQ_CANTIDAD	Cantidad de elementos solicit por producto
+DETA_PEDIDO	DREQ_ESTADO	Valor acumulado de atenciones por Salidas de almacen
+DETA_PEDIDO	DREQ_ITEM	Numero de linea para presentacion
+DETA_PEDIDO	DREQ_LINEA	Control de linea en el pedido
+DETA_PEDIDO	ECON_CONSECU	Consecutivo del contrato.
+DETA_PEDIDO	EREQ_CONSECU	Numero del pedido
+DETA_PEDIDO	GENE_PRODUCTO	Codigo generico (Mesas-Sillas-Cosedoras) 
+DETA_PEDIDO	GRUP_PRODUCTO	Clasif dentro del anterior (Muebles-Inmuebs)
+DETA_PEDIDO	PROD_CODIGO	Codigo del elemento 
+DETA_PEDIDO	TNOV_CONSECU	Consecutivo de la novedad.
+DETA_PEDIDO	TPRO_CONSECU	Consecutivo del producto asociado a un producto y/o servicio del proveedor.
+DETA_PEDIDO	TPRV_CONSECU	Consecutivo del producto y/o servicio.
+DETA_PEDIDO	UNI_CODIGO	Codigo de la medida del elemento 
+ENCA_COMPRA	CC1_CODIGO	Centro de costo destino
+ENCA_COMPRA	CC2_CODIGO	Centro de costo destino
+ENCA_COMPRA	CC3_CODIGO	Centro de costo destino
+ENCA_COMPRA	CC4_CODIGO	Centro de costo destino
+ENCA_COMPRA	ECOM_CONSECU	Numero de la orden de compra
+ENCA_COMPRA	ECOM_FECHA	Fecha de la orden de compra
+ENCA_COMPRA	ECOM_FECHA_ENTREGA	Fecha cuando se entrega la orden de compra al proveedor
+ENCA_COMPRA	ECOM_FORMA_PAGO	Forma de pago asociada a la orden de compra
+ENCA_COMPRA	ECOM_SYSDATE	Fecha en que se inserto o actualizo el registro
+ENCA_COMPRA	ECOM_TERMINAL	Terminal desde la cual se inserto o actualizo el registro
+ENCA_COMPRA	ECOM_USUARIO	Usuario que inserto o actualizo el registro
+ENCA_COMPRA	EMP_CODIGO	Empleado responsable de la compra.
+ENCA_COMPRA	ENT_CODIGO_APROB	C¿digo del ente aprobador
+ENCA_COMPRA	NRO_COPIA	control de numero de copias ha ser impresas de la orden 
+ENCA_COMPRA	PROV_DOCUMENTO	Numero de documento del proveedor
+ENCA_FACTURA	COD_ITEM_PDF	Indica el tipo de parametrizacion de descuentos financieros
+ENCA_FACTURA	EFAC_ANNO_VIGENCIA	Vigencia asociada con la factura registrada
+ENCA_FACTURA	EFAC_APLI_ORIGEN	Indica la aplicación desde la cual se origina la factura
+ENCA_FACTURA	EFAC_CARGUE	Indica S si la factura se cargó por archivo plano
+ENCA_FACTURA	EFAC_CAUSACION	Indica si el origen del documento es causacion
+ENCA_FACTURA	EFAC_CONSECU	Numero de control asignado a las facturas en general
+ENCA_FACTURA	EFAC_DEP_DESTINO	Codigo del departamento destino para facturas tipo Z
+ENCA_FACTURA	EFAC_DEP_ORIGEN	Codigo del departamento origen para facturas tipo Z
+ENCA_FACTURA	EFAC_DESCRIBE	Descripcion de factura
+ENCA_FACTURA	EFAC_DESCTO	Valor del descutento de factura
+ENCA_FACTURA	EFAC_DESCTO_COM	Descuento por compra
+ENCA_FACTURA	EFAC_ESTADO	Estado de la transaccion F = Facturado, P = Pendiente, A = Anulado
+ENCA_FACTURA	EFAC_FECHA	Fecha de la factura
+ENCA_FACTURA	EFAC_FECHA_PAGO	Fecha plazo a pagar o vencimiento se sugiere la del proveedor
+ENCA_FACTURA	EFAC_ICON	Valor del impuesto al consumo
+ENCA_FACTURA	EFAC_INDICA_AGRUPA_CHEQUE	Indica si la factura se consolida o se agrupa en la generación del cheque
+ENCA_FACTURA	EFAC_IVA	Cobro del IVA en la factura
+ENCA_FACTURA	EFAC_LEGALIZADA	Indica si la causación del documento fue legalizada
+ENCA_FACTURA	EFAC_MUN_DESTINO	Codigo del municipio destino para facturas tipo Z
+ENCA_FACTURA	EFAC_MUN_ORIGEN	Codigo del municipio origen para facturas tipo Z
+ENCA_FACTURA	EFAC_NRO_PROV	Numero de la factura segun proveedor
+ENCA_FACTURA	EFAC_NUMERO	Identificador unico de transaccion
+ENCA_FACTURA	EFAC_PAI_DESTINO	Codigo del pais destino para facturas tipo Z
+ENCA_FACTURA	EFAC_PAI_ORIGEN	Codigo del pais origen para facturas tipo Z
+ENCA_FACTURA	EFAC_REDONDA	Valor redondeado S o N
+ENCA_FACTURA	EFAC_RETEN	Retencion hecha a la factura
+ENCA_FACTURA	EFAC_SYSDATE	Fecha de grabacion en el sistema
+ENCA_FACTURA	EFAC_TIPO	A=Adelanto; I=Ingreso al almacen S=Servicio
+ENCA_FACTURA	EFAC_TOTAL	Total de la facturacion
+ENCA_FACTURA	EFAC_TRATAMIENTO_SISA	Indica el tratamiento para las facturas creadas por interfaz. Registro = R, Contabilidad = C, Pago = P
+ENCA_FACTURA	EFAC_VALIDA_MONTO	Indica si se valida el monto mínimo para Rete-Fuente, Rete-ICA y Rete-IVA.
+ENCA_FACTURA	PRETI_CODIGO_EMPR	Tipo de contribucion de la empresa
+ENCA_FACTURA	PROV_DOCUMENTO	Numero del proveedor
+ENCA_FACTURA	TAPA_CONSECU	Consecutivo del lote al que pertenece cada documento
+ENCA_INGRESO	CC1_CODIGO	Centro de costo-3 que recibe
+ENCA_INGRESO	CC2_CODIGO	Centro de costo-4 que recibe
+ENCA_INGRESO	CC3_CODIGO	Centro de costo-5 que recibe
+ENCA_INGRESO	CC4_CODIGO	Centro de costo-6 que recibe
+ENCA_INGRESO	EING_CONSECU	Numero de control de la orden
+ENCA_INGRESO	EING_CONTABILIZA	Indicador de contabilizacion del ingreso
+ENCA_INGRESO	EING_ESTADO	Estado de la transaccion a = aprobado, p = pendiente, n = anulado
+ENCA_INGRESO	EING_FECHA	Fecha de recepcion del bien
+ENCA_INGRESO	EING_FEC_REMISION	Fecha de remision
+ENCA_INGRESO	EING_NUMERO	Identificador unico de transaccion
+ENCA_INGRESO	EING_NUMERO_IR	Número de informe de recepción de otros sistemas. HISISI para FSFB
+ENCA_INGRESO	EING_NUM_REMISION	Numero de documento de remision del proveedor
+ENCA_INGRESO	EING_OBSERVACION	Observaciones generales al ingreso del bien
+ENCA_INGRESO	EING_SYSDATE	Fecha de grabacion de la orden
+ENCA_INGRESO	EING_TIPO	Tipo de ingreso S = semimanual , N= Normal
+ENCA_INGRESO	EMPR_CONSECU	Centro de costo-1 que recibe
+ENCA_INGRESO	ENT_CODIGO	Codigo del Ente Aprobador
+ENCA_INGRESO	MON_CONSECU	Codigo de Moneda aplicada a la orden de compra
+ENCA_INGRESO	PROV_DOCUMENTO	Numero de documento del proveedor
+ENCA_INGRESO	REGI_CONSECU	Centro de costo-2 que recibe
+ENCA_INGRESO	TAPA_CONSECU	Consecutivo del lote al que pertenece cada documento
+ENCA_INGRESO	TASA_LINEA	Tasa de cambio aplicada a la orden de compra
+PROVEEDOR	ACRE_CONSECU	Consecutivo de la actividad económica principal del proveedor para aplicar el impuesto CREE
+PROVEEDOR	CC1_CODIGO_CARPETA	Centro de costo nivel 3 responsable de la carpeta
+PROVEEDOR	CC1_CODIGO_COLOCACION	Centro de costo nivel 3 de colocacion para pago por cheque
+PROVEEDOR	CC2_CODIGO_CARPETA	Centro de costo nivel 4 responsable de la carpeta
+PROVEEDOR	CC2_CODIGO_COLOCACION	Centro de costo nivel 4 de colocacion para pago por cheque
+PROVEEDOR	CC3_CODIGO_CARPETA	Centro de costo nivel 5 responsable de la carpeta
+PROVEEDOR	CC3_CODIGO_COLOCACION	Centro de costo nivel 5 de colocacion para pago por cheque
+PROVEEDOR	CC4_CODIGO_CARPETA	Centro de costo nivel 6 responsable de la carpeta
+PROVEEDOR	CC4_CODIGO_COLOCACION	Centro de costo nivel 6 de colocacion para pago por cheque
+PROVEEDOR	DEP_CODIGO	Codigo de departamento o pais
+PROVEEDOR	EMPR_CONSECU_CARPETA	Centro de costo nivel 1 responsable de la carpeta
+PROVEEDOR	EMPR_CONSECU_COLOCACION	Centro de costo nivel 1 de colocacion para pago por cheque
+PROVEEDOR	MUN_CODIGO	Codigo de municipio o ciudad
+PROVEEDOR	PRETI_CODIGO	Tipo de regimen de contribucion asociado al porveedor
+PROVEEDOR	PROV_ACT_DOCU	"Indica si se acepta la
+
+modificacion del registro del PROVEEDOR"
+PROVEEDOR	PROV_ACT_LIM_REP	Limitaciones del Representante.
+PROVEEDOR	PROV_ATR_REF	Atributos del Representante.
+PROVEEDOR	PROV_ATR_VAL_REP	Valor de negociacion permitido para representante.
+PROVEEDOR	PROV_CARPETA	Numero de carpeta conformado por el centro de costo responsable y un consecutivo
+PROVEEDOR	PROV_CHEQUEO	Bandera que indica ....
+PROVEEDOR	PROV_CLASE	Clase proveedor (I=Import P=Produc D=Dist)
+PROVEEDOR	PROV_CONT_APE1	Primer apellido del contacto
+PROVEEDOR	PROV_CONT_APE2	Segundo apellido del contacto
+PROVEEDOR	PROV_CONT_NOMBRE	Nombre del contacto
+PROVEEDOR	PROV_DEDICA	Elementos que distribuye el proveedor
+PROVEEDOR	PROV_DEP	Departamento de la Notaria.
+PROVEEDOR	PROV_DIRECCION	Direccion del proveedor
+PROVEEDOR	PROV_DOCUMENTO	Numero de documento del proveedor
+PROVEEDOR	PROV_ESTADO	A=Activo I=Inactivo E=Estudio V=Vetado
+PROVEEDOR	PROV_FAX	Numero de fax del proveedor
+PROVEEDOR	PROV_FEC_ACTIVOS	Fecha del valor de los activos.
+PROVEEDOR	PROV_FEC_F_CAMARA	Fecha de vencimiento del proveedor
+PROVEEDOR	PROV_FECHA_ACTUALIZA	Fecha de la ultima actualizacion de documentos del proveedor.
+PROVEEDOR	PROV_FEC_INGRESOS	Fecha del Valor de los ingresos.
+PROVEEDOR	PROV_FEC_ULT_CAMP	Fecha de la ultima reforma.
+PROVEEDOR	PROV_FEC_ULT_REF	Fecha de la ultima reforma.
+PROVEEDOR	PROV_MOT_REF	Motivo de la Reforma.
+PROVEEDOR	PROV_MUN	Municipio de la Notaria.
+PROVEEDOR	PROV_NOMBRE	Razon social del proveedor
+PROVEEDOR	PROV_NOTA_REF	Numero de la Notaria de la Reforma.
+PROVEEDOR	PROV_NRO_REF	Numero de la Reforma.
+PROVEEDOR	PROV_OBS_DOCU	"Observaciones sobre la
+
+actualizacion o modificacion del registro del PROVEEDOR"
+PROVEEDOR	PROV_PAI	Pais de la Notaria.
+PROVEEDOR	PROV_REGISTRO	Numero de registro como proveedor de la entidad
+PROVEEDOR	PROV_REP_APE1	Primer apellido del representante
+PROVEEDOR	PROV_REP_APE2	Segundo apellido del representante
+PROVEEDOR	PROV_REP_NOMBRE	Nombre del representante
+PROVEEDOR	PROV_TAXID	Identificación de proveedores extranjeros
+PROVEEDOR	PROV_TIPO_DOC	Tipo de documento del proveedor
+PROVEEDOR	PROV_TIPO_PERSONA	Tipo de naturaleza del proveedor (Natural y Jurídica).Familia de códigos TNP
+PROVEEDOR	PROV_TRIBUTA	Indica si es autoretenedor (A) o no (N)
+PROVEEDOR	PROV_TRIBUTA_CREE	Indica si el proveedor es autoretenedor CREE (A) o no (N)
+PROVEEDOR	PROV_ULT_COMPRA	Fecha de ultima compra
+PROVEEDOR	PROV_VAL_ACTIVOS	Valor Activos.
+PROVEEDOR	PROV_VAL_ACT_REP	Valor Acta del representante.
+PROVEEDOR	PROV_VAL_INGRESOS	Valor de los Ingresos.
+PROVEEDOR	PROV_VENCE	Numero de dias en que vencen sus facturas
+PROVEEDOR	REGI_CONSECU_CARPETA	Centro de costo nivel 2 responsable de la carpeta
+PROVEEDOR	REGI_CONSECU_COLOCACION	Centro de costo nivel 2 de colocacion para pago por cheque
+TSS_CON_ARRI_CONTRATO	ACTE_CODIGO	Codigo del tipo de actividad economica
+TSS_CON_ARRI_CONTRATO	ARCO_CANT_SATISFECHA	Cantidad ingresa para contrato de compra tipo 009.
+TSS_CON_ARRI_CONTRATO	ARCO_DESCTO	Valor del descuento
+TSS_CON_ARRI_CONTRATO	ARCO_DESCTO_TIPO	Tipo de descuento
+TSS_CON_ARRI_CONTRATO	ARCO_GARANTIA	Garantia del producto
+TSS_CON_ARRI_CONTRATO	ARCO_LINEA	Numero de linea del detalle
+TSS_CON_ARRI_CONTRATO	ARCO_SYSDATE	Fecha del sistema en la que se registra el detalle del contrato
+TSS_CON_ARRI_CONTRATO	ARCO_TIEMPO_ENTREGA	Número de días para la entrega
+TSS_CON_ARRI_CONTRATO	ARCO_VALOR_ARRIENDO	Valor pagado por el arriendo del bien tomado en arriendo
+TSS_CON_ARRI_CONTRATO	ECON_CONSECU	Consecutivo del contrato al que pertenece el detalle
+TSS_CON_ARRI_CONTRATO	IVA_TIPO	Tipo de iva aplicado al arriendo
+TSS_CON_ARRI_CONTRATO	PROV_DOCUMENTO	Documento del proveedor
+TSS_CON_ARRI_CONTRATO	RET_TIPO	Tipo de retencion aplicado al arriendo
+TSS_CON_ARRI_CONTRATO	RET_TIPO2	Tipo de retencion aplicado al arriendo
+TSS_CON_ARRI_CONTRATO	UNI_CODIGO	Codigo de la unidad a comprar
+TSS_CON_ARRI_CONTRATO_REG	ACTE_CODIGO	Código del tipo de actividad económica
+TSS_CON_ARRI_CONTRATO_REG	ARCO_DESCTO	Valor del descuento
+TSS_CON_ARRI_CONTRATO_REG	ARCO_DESCTO_TIPO	Tipo de descuento
+TSS_CON_ARRI_CONTRATO_REG	ARCO_GARANTIA	Garantia del producto
+TSS_CON_ARRI_CONTRATO_REG	ARCO_LINEA	Numero de linea del detalle 
+TSS_CON_ARRI_CONTRATO_REG	ARCO_SYSDATE	Fecha del sistema en la que se registra el detalle del contrato 
+TSS_CON_ARRI_CONTRATO_REG	ARCO_TIEMPO_ENTREGA	Número de días para la entrega
+TSS_CON_ARRI_CONTRATO_REG	ARCO_VALOR_ARRIENDO	Valor pagado por el arriendo del bien tomado en arriendo 
+TSS_CON_ARRI_CONTRATO_REG	ECON_CONSECU	Consecutivo del contrato al que pertenece el detalle
+TSS_CON_ARRI_CONTRATO_REG	IVA_TIPO	Tipo de iva aplicado al arriendo
+TSS_CON_ARRI_CONTRATO_REG	PROV_DOCUMENTO	Documento del proveedor
+TSS_CON_ARRI_CONTRATO_REG	RET_TIPO	Tipo de retencion aplicado al arriendo
+TSS_CON_ARRI_CONTRATO_REG	RET_TIPO2	Tipo de retención aplicado al arriendo
+TSS_CON_ARRI_CONTRATO_REG	UNI_CODIGO	Codigo de la unidad a comprar
+TSS_CON_CLAUSULA	CLAU_DESCRIPCION	Descripcion de la clausula
+TSS_CON_CLAUSULA	CLAU_EJECUCION	Fecha de ejecucion de la clausula
+TSS_CON_CLAUSULA	CLAU_LINEA	Linea de la Clausula
+TSS_CON_CLAUSULA	CLAU_NOMBRE	Nombre de la Clausula
+TSS_CON_CLAUSULA	CLAU_TIPO	Codigo del tipo de Clausula
+TSS_CON_CLAUSULA	ECON_CONSECU	Consecutivo del contrato
+TSS_CON_DETA_REGISTRO	CDER_TIPO	Tipo de modificación a hacerle al contrato.
+TSS_CON_DETA_REGISTRO	CENR_CONSECU	Consecutivo de la modificación.
+TSS_CON_DETA_REGISTRO	ECON_CONSECU	Consecutivo de contrato asignado por el sistema 
+TSS_CON_DETA_REGISTRO	ECON_NUMERO	Numero del contrato asignado por el proveedor o por la empresa
+TSS_CON_DETA_REGISTRO	ECON_TIPO_OTRO_SI	En caso de que se trate de un contrato de reajuste indica el tipo de reajuste, de lo contrario toma valor 000
+TSS_CON_EJECUCION	ACTE_CODIGO	Código del tipo de actividad económica.
+TSS_CON_EJECUCION	ECON_CAUSACION	Indica si se va a realizar la causación del contrato
+TSS_CON_EJECUCION	EJEC_VALOR_PROYECTADO	Valor proyectado para la visacion.
+TSS_CON_EJECUCION	EJEC_VARIACION_AUT	Indica si la variacion de incremento fue generada automaticamente (S) en otro caso (N).
+TSS_CON_EJECUCION	EJEC_VARIACION_INCREMENTO	Indica la variacion del incremento
+TSS_CON_EJECUCION	EJEC_VARIACION_SISTEMA	"Es la variacion calculada por el sistema. Se usa para la salida a produccion del requerimiento.
+ Es la diferencia entre ejec_valor_proyectado del mes(teniendo en cuenta el porcentaje de ipc que se cobro en el mes) +
+ ejec_variacion_incremento - (ejec_valor_proyectado teniendo en cuenta el porcentaje de la tabla de ipc para el incremento).
+solo se va a usar en los periodos de incrementos activos a la fecha de paso a produccion. Se podra utilizar cuando se
+decida que el usuario puede ingresar datos a este campo para que se hagan arreglos de valores manuales."
+TSS_CON_EJECUCION	EMPR_CONSECU	Codigo de la empresa
+TSS_CON_EJECUCION	ENT_CODIGO	Codigo del ente
+TSS_CON_EJECUCION	INCO_ESTIMADO	Indica el valor del incremento
+TSS_CON_EJECUCION	INCO_FEC_FIN	Fecha final donde el incremento es aplicable para el contrato.
+TSS_CON_EJECUCION	INCO_FEC_INCREMENTO	Indica la fecha del incremento
+TSS_CON_EJECUCION	INCO_FEC_INI	Fecha inicial donde el incremento es aplicable para el contrato.
+TSS_CON_EJECUCION	INCO_INCREMENTO	Indica el valor adicional del incremento
+TSS_CON_EJECUCION	INCO_PCT	Porcentaje aplicado sobre el incremento.
+TSS_CON_EJECUCION	INCO_TIPO	Tipo de incremento aplicado, familia de codigos TIC.
+TSS_CON_EJECUCION	IVA_TIPO	Tipo de iva aplicado al arriendo
+TSS_CON_EJECUCION	MON_CONSECU	tipo de moneda.
+TSS_CON_EJECUCION	PROV_DOCUMENTO	Numero del documento del proveedor
+TSS_CON_EJECUCION	RAD_CONSECU	Consecutivo de la radicacion.
+TSS_CON_EJECUCION	RET_TIPO	Tipo de retencion aplicado al arriendo.
+TSS_CON_EJECUCION	RET_TIPO2	Tipo de retención aplicado al arriendo.
+TSS_CON_EJECUCION	VALOR_DESCTO	Valor con descuento
+TSS_CON_ENCA_CONTRATO	CC1_CODIGO	Centro de costos nivel uno
+TSS_CON_ENCA_CONTRATO	CC2_CODIGO	Centro de costos nivel dos
+TSS_CON_ENCA_CONTRATO	CC3_CODIGO	Centro de costos nivel tres
+TSS_CON_ENCA_CONTRATO	CC4_CODIGO	Centro de costos nivel cuatro
+TSS_CON_ENCA_CONTRATO	ECON_CAUSACION	Indica si se va a realizar la causación del contrato
+TSS_CON_ENCA_CONTRATO	ECON_CLASE	Clase de contrato, de la familia de codigos CCO
+TSS_CON_ENCA_CONTRATO	ECON_CONSECU	Consecutivo de contrato asignado por el sistema
+TSS_CON_ENCA_CONTRATO	ECON_CONSECU_DE	Consecutivo de contrato del contrato papa, si se trata de un reajuste
+TSS_CON_ENCA_CONTRATO	ECON_CONTROL_EJEC	Indica si se ejecuta la visación para el contrato
+TSS_CON_ENCA_CONTRATO	ECON_ESTADO	Posibles estados del contrato, 001:Cotizacion de contrato, 002: contrato definitivo, 003: contrato dado de baja
+TSS_CON_ENCA_CONTRATO	ECON_FEC_EXPED	Fecha de registro del contrato
+TSS_CON_ENCA_CONTRATO	ECON_FEC_INICI	Fecha inicial de visación del contrato
+TSS_CON_ENCA_CONTRATO	ECON_FEC_INI_CONT	Fecha inicial de vigencia del contrato
+TSS_CON_ENCA_CONTRATO	ECON_FEC_VENCE	Fecha final de vigencia del contrato
+TSS_CON_ENCA_CONTRATO	ECON_FORMA_PAGO	Tipo de forma de pago
+TSS_CON_ENCA_CONTRATO	ECON_NRO_OTRO_SI	Numero de secuencia de otrosi para el contrato original
+TSS_CON_ENCA_CONTRATO	ECON_NUMERO	Numero del contrato asignado por el proveedor o por la empresa
+TSS_CON_ENCA_CONTRATO	ECON_OBJETO	Objeto del contrato
+TSS_CON_ENCA_CONTRATO	ECON_PROVISION	Indicador para determinar si el contrato tiene una provision asociada o no, S:Con provision, N:SIN provision
+TSS_CON_ENCA_CONTRATO	ECON_SYSDATE	Fecha del sistema cuando se registro el contrato
+TSS_CON_ENCA_CONTRATO	ECON_TERMINAL	Terminal donde se registro el contrato
+TSS_CON_ENCA_CONTRATO	ECON_TIEMPO_ENTREGA	Número de días para la entrega
+TSS_CON_ENCA_CONTRATO	ECON_TIPO	Tipos de contratos, 001:de producto o servicio, 002:de mantenimiento de activos fijos,003: de mantenimiento de centros de costo, 004:de bienes dados en arriendo, 005:de bienes tomados en arriendo
+TSS_CON_ENCA_CONTRATO	ECON_TIPO_COMITE	Tipo de comite, de la familia de codigos CCM
+TSS_CON_ENCA_CONTRATO	ECON_TIPO_CUANTIA	Indicador de cuantia determinada o indeterminada, 001:Determinada, 002:Indeterminada
+TSS_CON_ENCA_CONTRATO	ECON_TIPO_DOCU	Codigo del tipo de documento para el registro del contrato.
+TSS_CON_ENCA_CONTRATO	ECON_TIPO_GASTO	Indicador para determinar si los productos del contrato se amortizan o se llevan al gasto A:Amortizable, N:Se lleva al gasto
+TSS_CON_ENCA_CONTRATO	ECON_TIPO_OTRO_SI	En caso de que se trate de un contrato de reajuste indica el tipo de reajuste, de lo contrario toma valor 000
+TSS_CON_ENCA_CONTRATO	ECON_TIPO_PROCEDENCIA	Indicador para conocer si el contrato fue dado de alta, registrado normalmente o generado automaticamente por el sistema, 001:Automatica, 002:NORMAL, 003:Alta
+TSS_CON_ENCA_CONTRATO	ECON_TIPO_RECAUDO	Indicador para determinar si el contrato genera facturas u ordenes de cobro, 001:Factura, 002:Ordenes de cobro
+TSS_CON_ENCA_CONTRATO	ECON_TIPO_RECAUDO_TIMBRE	Indicador para determinar si el contrato debe generar facturas u ordenes  de cobro para pagar el impuesto de trimbre, 001:Factura, 002:Ordenes de cobro
+TSS_CON_ENCA_CONTRATO	ECON_USER	Usuario que registra el contrato
+TSS_CON_ENCA_CONTRATO	EMP_CODIGO_SUPER	Código del empleado supervisor del contrato/orden
+TSS_CON_ENCA_CONTRATO	ENT_CODIGO	Codigo del ente que registro el contrato
+TSS_CON_ENCA_CONTRATO	ETIP_TIPO	Tipo de contrato nivel 1
+TSS_CON_ENCA_CONTRATO	ETIP_TIPO2	Tipo de contrato nivel 2
+TSS_CON_ENCA_CONTRATO	ETIP_TIPO3	Tipo de contrato nivel 3
+TSS_CON_ENCA_CONTRATO	MNT_CODIGO	Indica el codigo del tipo de mantenimiento que se va a realizar
+TSS_CON_ENCA_CONTRATO	PROV_DOCUMENTO	Numero de identificacion del proveedor
+TSS_CON_ENCA_CONTRATO_REG	CC1_CODIGO	Centro de costos nivel uno
+TSS_CON_ENCA_CONTRATO_REG	CC2_CODIGO	Centro de costos nivel dos
+TSS_CON_ENCA_CONTRATO_REG	CC3_CODIGO	Centro de costos nivel tres
+TSS_CON_ENCA_CONTRATO_REG	CC4_CODIGO	Centro de costos nivel cuatro
+TSS_CON_ENCA_CONTRATO_REG	ECON_CAUSACION	Indica si se va a realizar la causación del contrato
+TSS_CON_ENCA_CONTRATO_REG	ECON_CLASE	clase de contrato, de la familia de codigos CCO
+TSS_CON_ENCA_CONTRATO_REG	ECON_CONSECU	Consecutivo de contrato asignado por el sistema 
+TSS_CON_ENCA_CONTRATO_REG	ECON_CONSECU_DE	Consecutivo de contrato del contrato padre, si se trata de un reajuste
+TSS_CON_ENCA_CONTRATO_REG	ECON_ESTADO	Posibles estados del contrato, 001:Cotizacion de contrato, 002: contrato definitivo, 003: contrato dado de baja
+TSS_CON_ENCA_CONTRATO_REG	ECON_FEC_EXPED	Fecha de registro del contrato
+TSS_CON_ENCA_CONTRATO_REG	ECON_FEC_INICI	Fecha inicial de visación del contrato
+TSS_CON_ENCA_CONTRATO_REG	ECON_FEC_INI_CONT	Fecha inicial de vigencia del contrato
+TSS_CON_ENCA_CONTRATO_REG	ECON_FEC_VENCE	Fecha final de vigencia del contrato
+TSS_CON_ENCA_CONTRATO_REG	ECON_FORMA_PAGO	Tipo de forma de pago
+TSS_CON_ENCA_CONTRATO_REG	ECON_NRO_OTRO_SI	Numero de secuencia de otrosi para el contrato original
+TSS_CON_ENCA_CONTRATO_REG	ECON_NUMERO	Numero del contrato asignado por el proveedor o por la empresa
+TSS_CON_ENCA_CONTRATO_REG	ECON_OBJETO	Objeto del contrato
+TSS_CON_ENCA_CONTRATO_REG	ECON_PROVISION	Indicador para determinar si el contrato tiene una provision asociada o no, S:Con provision, N:Sin provision
+TSS_CON_ENCA_CONTRATO_REG	ECON_SYSDATE	Fecha del sistema cuando se registro el contrato
+TSS_CON_ENCA_CONTRATO_REG	ECON_TERMINAL	Terminal donde se registro el contrato
+TSS_CON_ENCA_CONTRATO_REG	ECON_TIEMPO_ENTREGA	Número de días para la entrega
+TSS_CON_ENCA_CONTRATO_REG	ECON_TIPO	Tipos de contratos, 001:de producto o servicio, 002:de mantenimiento de activos fijos,003: de mantenimiento de centros de costo, 004:de bienes dados en arriendo, 005:de bienes tomados en arriendo
+TSS_CON_ENCA_CONTRATO_REG	ECON_TIPO_COMITE	Tipo de comite, de la familia de codigos CCM
+TSS_CON_ENCA_CONTRATO_REG	ECON_TIPO_CUANTIA	Indicador de cuantia determinada o indeterminada, 001:Determinada, 002:Indeterminada
+TSS_CON_ENCA_CONTRATO_REG	ECON_TIPO_GASTO	Indicador para determinar si los productos del contrato se amortizan o se llevan al gasto A:Amortizable, N:Se lleva al gasto
+TSS_CON_ENCA_CONTRATO_REG	ECON_TIPO_OTRO_SI	En caso de que se trate de un contrato de reajuste indica el tipo de reajuste, de lo contrario toma valor 000
+TSS_CON_ENCA_CONTRATO_REG	ECON_TIPO_PROCEDENCIA	Indicador para conocer si el contrato fue dado de alta, registrado normalmente o generado automaticamente por el sistema, 001:Automatica, 002:Normal, 003:Alta
+TSS_CON_ENCA_CONTRATO_REG	ECON_TIPO_RECAUDO	Indicador para determinar si el contrato genera facturas u ordenes de cobro, 001:Factura, 002:Ordenes de cobro
+TSS_CON_ENCA_CONTRATO_REG	ECON_TIPO_RECAUDO_TIMBRE	Indicador para determinar si el contrato debe generar facturas u ordenes de cobro para pagar el impuesto de trimbre, 001:Factura, 002:Ordenes de cobro
+TSS_CON_ENCA_CONTRATO_REG	ECON_USER	Usuario que registra el contrato
+TSS_CON_ENCA_CONTRATO_REG	EMP_CODIGO_SUPER	Código del empleado supervisor del contrato/orden
+TSS_CON_ENCA_CONTRATO_REG	ENT_CODIGO	Codigo del ente que registro el contrato
+TSS_CON_ENCA_CONTRATO_REG	ETIP_TIPO	Tipo de contrato nivel 1
+TSS_CON_ENCA_CONTRATO_REG	ETIP_TIPO2	Tipo de contrato nivel 2
+TSS_CON_ENCA_CONTRATO_REG	ETIP_TIPO3	Tipo de contrato nivel 3
+TSS_CON_ENCA_CONTRATO_REG	MNT_CODIGO	Indica el codigo del tipo de mantenimiento que se va a realizar
+TSS_CON_ENCA_CONTRATO_REG	PROV_DOCUMENTO	Numero de identificacion del proveedor
+TSS_CON_ESTADO_CONTRATO	ECON_CONSECU	Consecutivo del copntrato 
+TSS_CON_ESTADO_CONTRATO	ESCO_FECHA	Indica la fecha en que cambia de estado
+TSS_CON_ESTADO_CONTRATO	ESCO_LINEA	Numero de linea del detalle 
+TSS_CON_ESTADO_CONTRATO	ESCO_SYSDATE	Fecha del sistema en la que se registra el cambio de estado del contrato
+TSS_CON_ESTADO_CONTRATO_REG	ECON_CONSECU	Consecutivo del copntrato 
+TSS_CON_ESTADO_CONTRATO_REG	ESCO_FECHA	Indica la fecha en que cambia de estado
+TSS_CON_ESTADO_CONTRATO_REG	ESCO_LINEA	Numero de linea del detalle 
+TSS_CON_ESTADO_CONTRATO_REG	ESCO_SYSDATE	Fecha del sistema en la que se registra el cambio de estado del contrato
+TSS_CON_INCREMENTO_CONTRATO	INCO_FEC_FIN	Indica la fecha final del periodo para el Incremento
+TSS_CON_INCREMENTO_CONTRATO	INCO_FEC_INCREMENTO	Indica la fecha final del periodo de incremento aplicado
+TSS_CON_INCREMENTO_CONTRATO	INCO_FEC_INI	Indica la fecha inicial del periodo para el Incremento
+TSS_CON_INCREMENTO_CONTRATO	INCO_PCT	Indica el porcentaje aplicado sobre el incremento
+TSS_CON_VISACION	CVIS_CANTIDAD4	Cantidad No. 4 para tarifas.
+TSS_CON_VISACION	CVIS_FECHA	Fecha de entrega del pedido
+TSS_CON_VISACION	CVIS_INCONSISTENCIA	Descripcion del tipo de inconsistencia
+TSS_CON_VISACION	CVIS_INCONSISTENCIA_INICIAL	Descripcion del tipo de inconsistencia inicial presentada
+TSS_CON_VISACION	CVIS_VALOR_CLIENTE	Valor de la cuenta por cobrar al cliente.
+TSS_CON_VISACION	CVIS_VARIACION_AUT	Indica si la variacion de incremento fue generada automaticamente (S) en otro caso (N).
+TSS_CON_VISACION	CVIS_VARIACION_INCREMENTO	Indica la variacion del incremento
+TSS_CON_VISACION	CVIS_VARIACION_SISTEMA	"Es la variacion calculada por el sistema. Se usa para la salida a produccion del requerimiento.
+Se podra utilizar cuando se decida que el usuario puede ingresar datos a este campo para que se hagan arreglos de valores manuales."
+TSS_CON_VISACION	INCO_ESTIMADO	Indica el valor del incremento
+TSS_CON_VISACION	INCO_FEC_FIN	Fecha final donde el incremento es aplicable para el contrato.
+TSS_CON_VISACION	INCO_FEC_INCREMENTO	Indica la fecha del incremento
+TSS_CON_VISACION	INCO_FEC_INI	Fecha inicial donde el incremento es aplicable para el contrato.
+TSS_CON_VISACION	INCO_INCREMENTO	Indica el valor adicional del incremento
+TSS_CON_VISACION	INCO_PCT	Porcentaje aplicado sobre el incremento.
+TSS_CON_VISACION	INCO_TIPO	Tipo de incremento aplicado, familia de codigos TIC.
+TSS_CON_VISACION	RAD_CONSECU	Consecutivo de la radicacion.
+TSS_CON_VLR_CONTRATO	ECON_CONSECU	Consecutivo de contrato asignado por el sistema 
+TSS_CON_VLR_CONTRATO	TIM_TIPO	Tipo de timbre aplicado al contrato
+TSS_CON_VLR_CONTRATO	VCON_ANO	Indica el ano para el cual se estan dando los valores de el contrato
+TSS_CON_VLR_CONTRATO	VCON_DESCTO_TIMBRE	Indica si el timbre del contrato de cuantía determinada ya ha sido descontado de la facturación
+TSS_CON_VLR_CONTRATO	VCON_ESTIMADO	Indica el valor que se estima debe tener el contrato para toda su vigencia
+TSS_CON_VLR_CONTRATO	VCON_PCT_TIM_PROV	Porcentaje del valor del timbre asumido por el proveedor
+TSS_CON_VLR_CONTRATO	VCON_SYSDATE	Fecha del sistema cuando se registro el contrato
+TSS_CON_VLR_CONTRATO	VCON_VALOR_ICON	Valor del impuesto al consumo aplicado al contrato
+TSS_CON_VLR_CONTRATO	VCON_VALOR_IVA	Valor de IVA aplicado al contrato
+TSS_CON_VLR_CONTRATO	VCON_VALOR_NETO	Cuantia del contrato despues de impuestos
+TSS_CON_VLR_CONTRATO	VCON_VALOR_RETENCION	Valor de RETENCION aplicado al contrato
+TSS_CON_VLR_CONTRATO	VCON_VALOR_RETENCION3	Valor de la retención 3(Impuesto CREE)
+TSS_CON_VLR_CONTRATO	VCON_VALOR_RETICA	Valor de retencion ICA aplicado al contrato
+TSS_CON_VLR_CONTRATO	VCON_VALOR_RETIVA	Valor de retencion al iva aplicado al contrato
+TSS_CON_VLR_CONTRATO_REG	ECON_CONSECU	Consecutivo de contrato asignado por el sistema 
+TSS_CON_VLR_CONTRATO_REG	TIM_TIPO	Tipo de timbre aplicado al contrato
+TSS_CON_VLR_CONTRATO_REG	VCON_ANO	Indica el ano para el cual se estan dando los valores de el contrato
+TSS_CON_VLR_CONTRATO_REG	VCON_ESTIMADO	Indica el valor que se estima debe tener el contrato para toda su vigencia
+TSS_CON_VLR_CONTRATO_REG	VCON_PCT_TIM_PROV	Porcentaje del valor del timbre asumido por el proveedor
+TSS_CON_VLR_CONTRATO_REG	VCON_SYSDATE	Fecha del sistema cuando se registro el contrato
+TSS_CON_VLR_CONTRATO_REG	VCON_VALOR_ICON	Valor del impuesto al consumo aplicado al contrato
+TSS_CON_VLR_CONTRATO_REG	VCON_VALOR_IVA	Valor de IVA aplicado al contrato
+TSS_CON_VLR_CONTRATO_REG	VCON_VALOR_NETO	Cuantia del contrato despues de impuestos
+TSS_CON_VLR_CONTRATO_REG	VCON_VALOR_RETENCION	Valor de RETENCION aplicado al contrato
+TSS_CON_VLR_CONTRATO_REG	VCON_VALOR_RETENCION3	Valor de la retención 3(Impuesto CREE)
+TSS_CON_VLR_CONTRATO_REG	VCON_VALOR_RETICA	Valor de retencion ICA aplicado al contrato
+TSS_CON_VLR_CONTRATO_REG	VCON_VALOR_RETIVA	Valor de retencion al iva aplicado al contrato
+TSS_CON_VLR_ESTIMADO	VEST_FEC_FIN	Indica la fecha final del periodo para el IPC
+TSS_CON_VLR_ESTIMADO	VEST_FEC_INI	Indica la fecha inicial del periodo para el IPC
+TSS_MAN_DOCUMENTO	ACT_CENTRO_CODIGO	Centro de costo al que se le realiza un envio de inventario de activos fijos
+TSS_MAN_DOCUMENTO	CHEQ_CONSECU	Consecutivo del cheque asociado al documento
+TSS_MAN_DOCUMENTO	CON_CENTRO_CODIGO	Centro de Costo que tiene asociado el contrato
+TSS_MAN_DOCUMENTO	ECOM_CONSECU	Consecutivo de la orden de compra asociada al documento.
+TSS_MAN_DOCUMENTO	ECON_CONSECU	Consecutivo del Contrato
+TSS_MAN_DOCUMENTO	EREQ_CONSECU	Consecutivo de la salida del pedido  del almacen
+TSS_MAN_DOCUMENTO	ETRAS_CONSECU	Consecutivo de la Autorizacion del Traslado
+TSS_MAN_DOCUMENTO	MADO_CONSECU	Consecutivo del documento
+TSS_MAN_DOCUMENTO	MADO_FECHA	Fecha en que se crea el documento
+TSS_MAN_DOCUMENTO	MADO_FECHA_ENVIO	Fecha de envio del documento al proveedor
+TSS_MAN_DOCUMENTO	MADO_FECHA_IMPRESION	Fecha en que se imprimio el documento
+TSS_MAN_DOCUMENTO	MADO_FECHA_RECHAZO	Fecha enque el proveedor notifico que rechaza el documentol proveedor
+TSS_MAN_DOCUMENTO	MADO_FECHA_RECIBO	Fecha de recibo del documento por parte del proveedor
+TSS_MAN_DOCUMENTO	MADO_FECHA_REENVIO	Fecha de Re - envio del documento al proveedor
+TSS_MAN_DOCUMENTO	MADO_FECHA_REIMPRESION	Ultima fecha en la que se re-imprimio un documento
+TSS_ORD_APROB_COMPRA	DAPR_FECHA	Fecha de aprobaci¿n
+TSS_ORD_APROB_COMPRA	DAPR_LINEA	Linea de detalle de aprobaci¿n
+TSS_ORD_APROB_COMPRA	DAPR_USUARIO	Usuario
+TSS_ORD_APROB_COMPRA	ECOM_CONSECU	Consecutivo de la orden de compra
+TSS_ORD_APROB_COMPRA	EMP_CODIGO_APRO	C¿digo del empleado asignado como aprobador
+TSS_ORD_APROB_COMPRA	EMPR_CONSECU	Consecutivo de la empresa
+TSS_ORD_APROB_COMPRA	ENT_CODIGO	C¿digo del ente autorizador
+TSS_ORDENES_ING_DIRECTOS	DCOM_LINEA	Linea del detalle de la orden de compra
+TSS_ORDENES_ING_DIRECTOS	DENT_LINEA	Numero de linea del detalle de la entrega de la orden de compra
+TSS_ORDENES_ING_DIRECTOS	ECOM_CONSECU	CONSECUTIVO ORDEN DE COMPRA
+TSS_ORDENES_ING_DIRECTOS	EING_CONSECU	CONSECUTIVO DE INGRESO
+TSS_OUT_ENCA_APROBACION	ECON_CONSECU_OTRO_SI	Consecutivo del contrato con el Otro Si
+TSS_OUT_ENCA_APROBACION	ENAP_CONSECU	Consecutivo de aprobacion
+TSS_OUT_ENCA_APROBACION	ENAP_FECHA	Fecha de aprobacion de pedido
+TSS_OUT_ENCA_APROBACION	ENAP_NUMERO	Numero de la aprobacion
+TSS_PAG_ADEL_EFAC	DADE_LINEA	Linea de detalle del adelanto
+TSS_PAG_ADEL_EFAC	EADE_CONSECU	Consecutivo sisa del adelanto
+TSS_PAG_ADEL_EFAC	EFAC_CONSECU	Consecutivo sisa de la factura
+TSS_PRO_MOVIMIENTO	PROM_FECHA	Fecha del movimiento.
+TSS_PRO_MOVIMIENTO	PROM_FECHA_USUARIO	Fecha digitada por el usuario en la actualizacion de los documentos del  proveedor.
+TSS_PRO_MOVIMIENTO	PROM_LINEA	"Consecutivo del movimiento
+
+en el registro del PROVEEDOR."
+TSS_PRO_MOVIMIENTO	PROM_OBSERVACION	"Descripcion del
+
+movimiento en el registro del PROVEEDOR."
+TSS_PRO_MOVIMIENTO	PROM_TIPO	Tipo de movimiento.
+TSS_PRO_MOVIMIENTO	PROM_USUARIO	"Usuario que realiza el
+
+movimiento en el registro del PROVEEDOR."
+TSS_PRO_MOVIMIENTO	PROV_DOCUMENTO	"Numero de documento del
+
+PROVEEDOR."
+
 SELECT table_name, comments
 FROM all_tab_comments
 WHERE owner = 'SISACFO' AND comments IS NOT NULL
   AND table_name IN ('TSS_CON_ESTADO_CONTRATO','TSS_CON_DETA_REGISTRO','TSS_MAN_DOCUMENTO',
                      'TSS_ORDENES_ING_DIRECTOS','DETA_PEDIDO','TSS_OUT_ENCA_APROBACION',
                      'TSS_CON_INCREMENTO_CONTRATO','TSS_CON_VLR_ESTIMADO');
+
+Respuesta
+DETA_PEDIDO	Items de la relacion de un pedido.  Alias=DPED
+TSS_CON_ESTADO_CONTRATO	Tabla que almacena las fechas y los estados por los que pasa un contrato
+TSS_MAN_DOCUMENTO	Almacena informacion relevante a los documentos derivados de los diferentes procesos de SISA
+TSS_ORDENES_ING_DIRECTOS	TABLA QUE RELACIONA LAS ORDENES DE COMPRA INCLUIDAS EN UN INGRESO
+TSS_OUT_ENCA_APROBACION	Aprobacion pedidos de outsourcing
 
 -- ---------------------------------------------------------------------
 -- 2. Facturas: tipo y estado contra vínculo con contrato
@@ -41,6 +514,18 @@ SELECT EFAC_TIPO, EFAC_ESTADO,
 FROM SISACFO.ENCA_FACTURA
 GROUP BY EFAC_TIPO, EFAC_ESTADO, CASE WHEN ECON_CONSECU IS NULL THEN 'SIN_CONTRATO' ELSE 'CON_CONTRATO' END
 ORDER BY 1, 2, 3;
+
+Respuesta
+I	F	SIN_CONTRATO	26781
+I	J	SIN_CONTRATO	496
+N	A	CON_CONTRATO	3
+N	F	CON_CONTRATO	53729
+N	F	SIN_CONTRATO	3
+N	J	CON_CONTRATO	1518
+O	A	SIN_CONTRATO	1
+O	F	SIN_CONTRATO	527
+W	F	SIN_CONTRATO	54
+W	J	SIN_CONTRATO	1
 
 -- ---------------------------------------------------------------------
 -- 3. Facturas: cuántas entran con la regla propuesta
@@ -57,6 +542,10 @@ SELECT
             AND f.EFAC_FECHA >= ADD_MONTHS(SYSDATE,-120) THEN 1 ELSE 0 END)                  AS recientes_de_contrato_fuera
 FROM SISACFO.ENCA_FACTURA f
 LEFT JOIN c ON c.ECON_CONSECU = f.ECON_CONSECU;
+
+
+RESPUESTA
+45015	10235	12545	15318	2
 
 -- ---------------------------------------------------------------------
 -- 4. Cierre de OC: órdenes fuera de la ventana de fecha que igual hay que
@@ -81,6 +570,9 @@ SELECT (SELECT COUNT(*) FROM o_ventana) AS oc_por_fecha,
          WHERE ECOM_CONSECU NOT IN (SELECT ECOM_CONSECU FROM o_ventana)) AS oc_extra_por_cierre
 FROM dual;
 
+respuesta
+9530	70
+
 -- ---------------------------------------------------------------------
 -- 5. DETA_INGRESO: ¿se vincula a OC, a contrato o a ambos?
 -- ---------------------------------------------------------------------
@@ -89,6 +581,9 @@ SELECT COUNT(*) AS total,
        SUM(CASE WHEN ECON_CONSECU IS NOT NULL THEN 1 ELSE 0 END)                           AS con_contrato,
        SUM(CASE WHEN ECOM_CONSECU IS NULL AND ECON_CONSECU IS NULL THEN 1 ELSE 0 END)      AS sin_vinculo
 FROM SISACFO.DETA_INGRESO;
+
+Respúesta
+48478	48478	0	0
 
 -- ---------------------------------------------------------------------
 -- 6. TSS_MAN_DOCUMENTO: a qué apunta cada fila (tabla polimórfica; las
@@ -104,6 +599,8 @@ SELECT COUNT(*) AS total,
        SUM(CASE WHEN ENAP_CONSECU  IS NOT NULL THEN 1 ELSE 0 END) AS aprobacion
 FROM SISACFO.TSS_MAN_DOCUMENTO;
 
+Respuesta
+23460	23216	0	93	0	0	0	151
 -- ---------------------------------------------------------------------
 -- 7. Volumen de los padres y maestros de los que dependen las tablas en
 --    alcance (deben existir en el destino antes de cargar)
@@ -134,6 +631,32 @@ UNION ALL SELECT 'CHEQUE',              COUNT(*) FROM SISACFO.CHEQUE
 UNION ALL SELECT 'TSS_ACF_ENCA_TRASLADO', COUNT(*) FROM SISACFO.TSS_ACF_ENCA_TRASLADO
 ORDER BY 2 DESC;
 
+Respuesta
+TSS_ORD_DETA_ENTREGA	44683
+DETA_COTIZA	22693
+TSS_PRO_TAR_PROV	14088
+PRODUCTO	9061
+TSS_MAN_TASA	5918
+ACTI_ECONOMICA	4484
+ENCA_PEDIDO	2340
+TSS_PRO_TAR_NOVEDAD	2038
+EMPLEADO	1981
+ENTE	472
+TSS_ACF_ENCA_TRASLADO	370
+TSS_IVA_DESCONTABLE	310
+CHEQUE	93
+RETENCION	60
+UNIDAD	42
+IVA	37
+TSS_MAN_PERIODOS	6
+TIMBRE	5
+TSS_IMP_CONSUMO	4
+TSS_MAN_PROD_OTROS	1
+TAPA	0
+TSS_CON_DETA_ENTREGA	0
+ENCA_SALIDA	0
+TSS_RAD_RADICACION	0
+
 -- ---------------------------------------------------------------------
 -- 8. Tablas de la familia PRODUCTO (nombres reales, no supuestos) y
 --    columnas de CC1..CC4 y CENTROS_VI (nombres de centros de costo)
@@ -142,10 +665,131 @@ SELECT table_name, num_rows FROM all_tables
 WHERE owner = 'SISACFO' AND (table_name LIKE '%PRODUCTO%' OR table_name LIKE 'CLAS%' OR table_name LIKE 'GRUP%' OR table_name LIKE 'GENE%')
 ORDER BY 1;
 
+Respuesta
+
+CLASI_PRODUCTO	7
+GENE_CENTRO	0
+GENE_PRODUCTO	120
+GENERO_ENTE	0
+GENEROS_ALMA	0
+GENEROS_RETEN	0
+GRUPO_PRODUCTO	18
+GRUPOS_DEL_MAYOR	8
+PRODUCTO	8993
+PRODUCTO_INEXISTENTE	0
+SOLI_PRODUCTO	1
+TSS_ARQ_PRODUCTOS_ESPECIALES	0
+TSS_ARQ_PRODUCTOS_PROYECTO	0
+TSS_ARQ_PRODUCTOS_PROYECTO_EX	
+TSS_INT_IMP_PRODUCTO	0
+TSS_MAN_PRODUCTOS_PADRE_HIJO	5
+TSS_PRO_TAR_PRODUCTO	13925
+
 SELECT table_name, column_id, column_name, data_type, data_length
 FROM all_tab_columns
 WHERE owner = 'SISACFO' AND table_name IN ('CC1','CC2','CC3','CC4')
 ORDER BY table_name, column_id;
 
+Respuesta
+CC1	1	EMPR_CONSECU	NUMBER	22
+CC1	2	REGI_CONSECU	NUMBER	22
+CC1	3	CC1_CODIGO	NUMBER	22
+CC1	4	CC1_NOMBRE	VARCHAR2	40
+CC1	5	CC1_DIRECCION	VARCHAR2	40
+CC1	6	CC1_TELEFONO	NUMBER	22
+CC1	7	CC1_FAX	NUMBER	22
+CC1	8	CC1_ALMACEN	VARCHAR2	1
+CC1	9	DEP_CODIGO	NUMBER	22
+CC1	10	MUN_CODIGO	NUMBER	22
+CC1	11	CC1_AA	NUMBER	22
+CC1	12	CC1_CERT_CAMARA	VARCHAR2	15
+CC1	13	CC1_REP_LEGAL	NUMBER	22
+CC1	14	CC1_NIT	VARCHAR2	13
+CC1	15	CC1_RETENEDOR	NUMBER	22
+CC1	16	CC1_TIPO	VARCHAR2	1
+CC1	17	CC1_PCT_OVERHEAD	NUMBER	22
+CC1	18	PAI_CODIGO	NUMBER	22
+CC1	19	EMP_CODIGO	VARCHAR2	11
+CC1	20	COD_CONTABLE	VARCHAR2	5
+CC1	21	CC1_SUCURSAL	VARCHAR2	1
+CC1	22	CC1_DOC_AUXILIAR	VARCHAR2	40
+CC1	23	CC1_ACTIVO	VARCHAR2	1
+CC1	24	CC1_ESTADO	VARCHAR2	5
+CC1	25	ZON_CODIGO	NUMBER	22
+CC1	26	MUN_CODIGO_COMP	VARCHAR2	50
+CC2	1	EMPR_CONSECU	NUMBER	22
+CC2	2	REGI_CONSECU	NUMBER	22
+CC2	3	CC1_CODIGO	NUMBER	22
+CC2	4	CC2_CODIGO	NUMBER	22
+CC2	5	CC2_NOMBRE	VARCHAR2	40
+CC2	6	CC2_DIRECCION	VARCHAR2	40
+CC2	7	CC2_TELEFONO	NUMBER	22
+CC2	8	CC2_FAX	NUMBER	22
+CC2	9	CC2_ALMACEN	VARCHAR2	1
+CC2	10	DEP_CODIGO	NUMBER	22
+CC2	11	MUN_CODIGO	NUMBER	22
+CC2	12	CC2_TIPO	VARCHAR2	1
+CC2	13	CC2_PCT_OVERHEAD	NUMBER	22
+CC2	14	PAI_CODIGO	NUMBER	22
+CC2	15	EMP_CODIGO	VARCHAR2	11
+CC2	16	COD_CONTABLE	VARCHAR2	5
+CC2	17	CC2_SUCURSAL	VARCHAR2	1
+CC2	18	CC2_DOC_AUXILIAR	VARCHAR2	40
+CC2	19	CC2_ACTIVO	VARCHAR2	1
+CC2	20	CC2_ESTADO	VARCHAR2	5
+CC2	21	ZON_CODIGO	NUMBER	22
+CC2	22	MUN_CODIGO_COMP	VARCHAR2	50
+CC3	1	EMPR_CONSECU	NUMBER	22
+CC3	2	REGI_CONSECU	NUMBER	22
+CC3	3	CC1_CODIGO	NUMBER	22
+CC3	4	CC2_CODIGO	NUMBER	22
+CC3	5	CC3_CODIGO	NUMBER	22
+CC3	6	CC3_NOMBRE	VARCHAR2	40
+CC3	7	CC3_DIRECCION	VARCHAR2	40
+CC3	8	CC3_TELEFONO	NUMBER	22
+CC3	9	CC3_FAX	NUMBER	22
+CC3	10	CC3_ALMACEN	VARCHAR2	1
+CC3	11	DEP_CODIGO	NUMBER	22
+CC3	12	MUN_CODIGO	NUMBER	22
+CC3	13	CC3_TIPO	VARCHAR2	1
+CC3	14	CC3_PCT_OVERHEAD	NUMBER	22
+CC3	15	PAI_CODIGO	NUMBER	22
+CC3	16	EMP_CODIGO	VARCHAR2	11
+CC3	17	COD_CONTABLE	VARCHAR2	5
+CC3	18	CC3_SUCURSAL	VARCHAR2	1
+CC3	19	CC3_DOC_AUXILIAR	VARCHAR2	40
+CC3	20	CC3_ACTIVO	VARCHAR2	1
+CC3	21	CC3_ESTADO	VARCHAR2	5
+CC3	22	ZON_CODIGO	NUMBER	22
+CC3	23	MUN_CODIGO_COMP	VARCHAR2	50
+CC4	1	EMPR_CONSECU	NUMBER	22
+CC4	2	REGI_CONSECU	NUMBER	22
+CC4	3	CC1_CODIGO	NUMBER	22
+CC4	4	CC2_CODIGO	NUMBER	22
+CC4	5	CC3_CODIGO	NUMBER	22
+CC4	6	CC4_CODIGO	NUMBER	22
+CC4	7	CC4_NOMBRE	VARCHAR2	40
+CC4	8	CC4_DIRECCION	VARCHAR2	30
+CC4	9	CC4_TELEFONO	NUMBER	22
+CC4	10	CC4_FAX	NUMBER	22
+CC4	11	DEP_CODIGO	NUMBER	22
+CC4	12	MUN_CODIGO	NUMBER	22
+CC4	13	CC4_ALMACEN	VARCHAR2	1
+CC4	14	CC4_TIPO	VARCHAR2	1
+CC4	15	CC4_PCT_OVERHEAD	NUMBER	22
+CC4	16	PAI_CODIGO	NUMBER	22
+CC4	17	EMP_CODIGO	VARCHAR2	11
+CC4	18	COD_CONTABLE	VARCHAR2	5
+CC4	19	CENCOS_CODIGO	VARCHAR2	15
+CC4	20	CC4_SUCURSAL	VARCHAR2	1
+CC4	21	CC4_DOC_AUXILIAR	VARCHAR2	40
+CC4	22	CC4_ACTIVO	VARCHAR2	1
+CC4	23	CC4_ESTADO	VARCHAR2	5
+CC4	24	ZON_CODIGO	NUMBER	22
+CC4	25	MUN_CODIGO_COMP	VARCHAR2	50
+
 SELECT object_type, object_name FROM all_objects
 WHERE owner = 'SISACFO' AND object_name = 'CENTROS_VI';
+
+Respuesta
+TABLE	CENTROS_VI
