@@ -1,16 +1,122 @@
-ya tenemos proveedores, ahora seguimos con los restantes que estan en la sigueinte tabla 
+-- =====================================================================
+-- SISACFO - Migración SISA - Dominios restantes: descubrimiento
+-- Ejecutar los bloques en orden y devolver los resultados.
+-- Cubre: Movimientos Proveedor, Contratos (+REG, ARRI, VLR, ESTADO),
+-- Visaciones, Ejecución, OC, Ingresos, Facturas y Workflow.
+-- =====================================================================
 
-Dominio	Tabla Principal	Histórico / Auditoría
-Proveedores	PROVEEDOR	TSS_PRO_MOVIMIENTO
-Movimientos Proveedor	TSS_PRO_MOVIMIENTO	Misma tabla
-Contratos	TSS_CON_ENCA_CONTRATO	TSS_CON_ENCA_CONTRATO_REG
-Histórico Contratos	TSS_CON_ENCA_CONTRATO_REG	Misma tabla
-Detalle Histórico Contratos	TSS_CON_ARRI_CONTRATO_REG	Misma tabla
-Valores Contrato	TSS_CON_VLR_CONTRATO	TSS_CON_VLR_CONTRATO_REG
-Estados Contrato	TSS_CON_ESTADO_CONTRATO	TSS_CON_ESTADO_CONTRATO_REG
-Visaciones	TSS_CON_VISACION	Misma tabla
-Ejecución Contratos	TSS_CON_EJECUCION	Misma tabla
-Órdenes de Compra	ENCA_COMPRA	Histórico no evidenciado
-Ingresos Orden Compra	ENCA_INGRESO	Histórico no evidenciado
-Facturas	ENCA_FACTURA	Histórico no evidenciado
-Notificaciones Workflow	TSS_WFL_HIST_NOTIFICA	Misma tabla
+-- ---------------------------------------------------------------------
+-- 1. Conteos reales + frescura de estadísticas
+-- ---------------------------------------------------------------------
+SELECT 'TSS_PRO_MOVIMIENTO'        AS tabla, COUNT(*) AS filas_reales FROM SISACFO.TSS_PRO_MOVIMIENTO
+UNION ALL SELECT 'TSS_CON_ENCA_CONTRATO',      COUNT(*) FROM SISACFO.TSS_CON_ENCA_CONTRATO
+UNION ALL SELECT 'TSS_CON_ENCA_CONTRATO_REG',  COUNT(*) FROM SISACFO.TSS_CON_ENCA_CONTRATO_REG
+UNION ALL SELECT 'TSS_CON_ARRI_CONTRATO',      COUNT(*) FROM SISACFO.TSS_CON_ARRI_CONTRATO
+UNION ALL SELECT 'TSS_CON_ARRI_CONTRATO_REG',  COUNT(*) FROM SISACFO.TSS_CON_ARRI_CONTRATO_REG
+UNION ALL SELECT 'TSS_CON_VLR_CONTRATO',       COUNT(*) FROM SISACFO.TSS_CON_VLR_CONTRATO
+UNION ALL SELECT 'TSS_CON_VLR_CONTRATO_REG',   COUNT(*) FROM SISACFO.TSS_CON_VLR_CONTRATO_REG
+UNION ALL SELECT 'TSS_CON_ESTADO_CONTRATO',    COUNT(*) FROM SISACFO.TSS_CON_ESTADO_CONTRATO
+UNION ALL SELECT 'TSS_CON_ESTADO_CONTRATO_REG',COUNT(*) FROM SISACFO.TSS_CON_ESTADO_CONTRATO_REG
+UNION ALL SELECT 'TSS_CON_VISACION',           COUNT(*) FROM SISACFO.TSS_CON_VISACION
+UNION ALL SELECT 'TSS_CON_EJECUCION',          COUNT(*) FROM SISACFO.TSS_CON_EJECUCION
+UNION ALL SELECT 'ENCA_COMPRA',                COUNT(*) FROM SISACFO.ENCA_COMPRA
+UNION ALL SELECT 'ENCA_INGRESO',               COUNT(*) FROM SISACFO.ENCA_INGRESO
+UNION ALL SELECT 'ENCA_FACTURA',               COUNT(*) FROM SISACFO.ENCA_FACTURA
+UNION ALL SELECT 'TSS_WFL_HIST_NOTIFICA',      COUNT(*) FROM SISACFO.TSS_WFL_HIST_NOTIFICA
+ORDER BY 1;
+
+SELECT table_name, num_rows AS filas_estadistica, last_analyzed, avg_row_len
+FROM all_tables
+WHERE owner = 'SISACFO'
+  AND table_name IN ('TSS_PRO_MOVIMIENTO','TSS_CON_ENCA_CONTRATO','TSS_CON_ENCA_CONTRATO_REG',
+                     'TSS_CON_ARRI_CONTRATO','TSS_CON_ARRI_CONTRATO_REG','TSS_CON_VLR_CONTRATO',
+                     'TSS_CON_VLR_CONTRATO_REG','TSS_CON_ESTADO_CONTRATO','TSS_CON_ESTADO_CONTRATO_REG',
+                     'TSS_CON_VISACION','TSS_CON_EJECUCION','ENCA_COMPRA','ENCA_INGRESO',
+                     'ENCA_FACTURA','TSS_WFL_HIST_NOTIFICA')
+ORDER BY table_name;
+
+-- ---------------------------------------------------------------------
+-- 2. Columnas de todas las tablas
+-- ---------------------------------------------------------------------
+SELECT table_name, column_id, column_name, data_type, data_length, nullable
+FROM all_tab_columns
+WHERE owner = 'SISACFO'
+  AND table_name IN ('TSS_PRO_MOVIMIENTO','TSS_CON_ENCA_CONTRATO','TSS_CON_ENCA_CONTRATO_REG',
+                     'TSS_CON_ARRI_CONTRATO','TSS_CON_ARRI_CONTRATO_REG','TSS_CON_VLR_CONTRATO',
+                     'TSS_CON_VLR_CONTRATO_REG','TSS_CON_ESTADO_CONTRATO','TSS_CON_ESTADO_CONTRATO_REG',
+                     'TSS_CON_VISACION','TSS_CON_EJECUCION','ENCA_COMPRA','ENCA_INGRESO',
+                     'ENCA_FACTURA','TSS_WFL_HIST_NOTIFICA')
+ORDER BY table_name, column_id;
+
+-- ---------------------------------------------------------------------
+-- 3. Llaves primarias y únicas
+-- ---------------------------------------------------------------------
+SELECT c.table_name, c.constraint_type, c.constraint_name, cc.column_name, cc.position
+FROM all_constraints c
+JOIN all_cons_columns cc ON cc.owner = c.owner AND cc.constraint_name = c.constraint_name
+WHERE c.owner = 'SISACFO'
+  AND c.constraint_type IN ('P','U')
+  AND c.table_name IN ('TSS_PRO_MOVIMIENTO','TSS_CON_ENCA_CONTRATO','TSS_CON_ENCA_CONTRATO_REG',
+                       'TSS_CON_ARRI_CONTRATO','TSS_CON_ARRI_CONTRATO_REG','TSS_CON_VLR_CONTRATO',
+                       'TSS_CON_VLR_CONTRATO_REG','TSS_CON_ESTADO_CONTRATO','TSS_CON_ESTADO_CONTRATO_REG',
+                       'TSS_CON_VISACION','TSS_CON_EJECUCION','ENCA_COMPRA','ENCA_INGRESO',
+                       'ENCA_FACTURA','TSS_WFL_HIST_NOTIFICA')
+ORDER BY c.table_name, c.constraint_type, c.constraint_name, cc.position;
+
+-- ---------------------------------------------------------------------
+-- 4. FKs hacia los padres (de qué depende cada tabla)
+-- ---------------------------------------------------------------------
+SELECT a.table_name AS hija, ac.column_name AS col_hija,
+       r.table_name AS padre, rc.column_name AS col_padre,
+       a.constraint_name, ac.position
+FROM all_constraints a
+JOIN all_cons_columns ac ON ac.owner = a.owner AND ac.constraint_name = a.constraint_name
+JOIN all_constraints r   ON r.owner = a.r_owner AND r.constraint_name = a.r_constraint_name
+JOIN all_cons_columns rc ON rc.owner = r.owner AND rc.constraint_name = r.constraint_name
+                        AND rc.position = ac.position
+WHERE a.constraint_type = 'R' AND a.owner = 'SISACFO'
+  AND a.table_name IN ('TSS_PRO_MOVIMIENTO','TSS_CON_ENCA_CONTRATO','TSS_CON_ENCA_CONTRATO_REG',
+                       'TSS_CON_ARRI_CONTRATO','TSS_CON_ARRI_CONTRATO_REG','TSS_CON_VLR_CONTRATO',
+                       'TSS_CON_VLR_CONTRATO_REG','TSS_CON_ESTADO_CONTRATO','TSS_CON_ESTADO_CONTRATO_REG',
+                       'TSS_CON_VISACION','TSS_CON_EJECUCION','ENCA_COMPRA','ENCA_INGRESO',
+                       'ENCA_FACTURA','TSS_WFL_HIST_NOTIFICA')
+ORDER BY a.table_name, a.constraint_name, ac.position;
+
+-- ---------------------------------------------------------------------
+-- 5. FKs de las HIJAS hacia estas tablas (descubre las tablas de detalle
+--    de contratos, OC, ingresos y facturas que aún no están en el inventario)
+-- ---------------------------------------------------------------------
+SELECT p.table_name AS padre, a.table_name AS hija, ac.column_name AS col_hija,
+       a.constraint_name, a.status
+FROM all_constraints a
+JOIN all_constraints p   ON p.owner = a.r_owner AND p.constraint_name = a.r_constraint_name
+JOIN all_cons_columns ac ON ac.owner = a.owner AND ac.constraint_name = a.constraint_name
+WHERE a.constraint_type = 'R' AND a.owner = 'SISACFO'
+  AND p.table_name IN ('TSS_CON_ENCA_CONTRATO','ENCA_COMPRA','ENCA_INGRESO','ENCA_FACTURA')
+ORDER BY p.table_name, a.table_name, a.constraint_name, ac.position;
+
+-- ---------------------------------------------------------------------
+-- 6. Columnas de fecha (candidatas para el criterio "últimos 10 años")
+-- ---------------------------------------------------------------------
+SELECT c.table_name, c.column_name, c.data_type, s.num_nulls, s.num_distinct
+FROM all_tab_columns c
+LEFT JOIN all_tab_col_statistics s
+  ON s.owner = c.owner AND s.table_name = c.table_name AND s.column_name = c.column_name
+WHERE c.owner = 'SISACFO'
+  AND (c.data_type = 'DATE' OR c.data_type LIKE 'TIMESTAMP%')
+  AND c.table_name IN ('TSS_PRO_MOVIMIENTO','TSS_CON_ENCA_CONTRATO','TSS_CON_ENCA_CONTRATO_REG',
+                       'TSS_CON_ARRI_CONTRATO','TSS_CON_ARRI_CONTRATO_REG','TSS_CON_VLR_CONTRATO',
+                       'TSS_CON_VLR_CONTRATO_REG','TSS_CON_ESTADO_CONTRATO','TSS_CON_ESTADO_CONTRATO_REG',
+                       'TSS_CON_VISACION','TSS_CON_EJECUCION','ENCA_COMPRA','ENCA_INGRESO',
+                       'ENCA_FACTURA','TSS_WFL_HIST_NOTIFICA')
+ORDER BY c.table_name, c.column_id;
+
+-- ---------------------------------------------------------------------
+-- 7. Constraints CHECK (dominios de estados y banderas)
+-- ---------------------------------------------------------------------
+SELECT table_name, constraint_name, search_condition
+FROM all_constraints
+WHERE owner = 'SISACFO' AND constraint_type = 'C'
+  AND table_name IN ('TSS_CON_ENCA_CONTRATO','TSS_CON_ESTADO_CONTRATO','TSS_CON_VISACION',
+                     'TSS_CON_EJECUCION','ENCA_COMPRA','ENCA_INGRESO','ENCA_FACTURA')
+ORDER BY table_name, constraint_name;
