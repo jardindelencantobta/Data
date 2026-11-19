@@ -15,6 +15,8 @@ python -m pip install truststore
 python "Descargar adjuntos.py" --solo-probar --no-verificar-ssl
 
 
+python "Descargar adjuntos.py" --solo-probar --id-inicial 100024720
+
 
 
 SDPSESSIONID=0F6E276ABAF3771235E7CDFCBB1DD556; JSESSIONIDSDP=04A5A692B7E2E87055C7A28DDE80B78F; _rem=true; febbc30d=becbc901598f4105999453323037058b; mesdp01dce551e7=4f32f1beb288350627db51ba8ab45d5b4977a37e8f3131ecde0ac0ccbecaa515; sdpcsrfcookie=ac9542dc9f34d6db5f96d5db18f5a15e83f03bcbe86cf6f002459adc123e0ee2d2a61a9feb77423bcc9bac6f8bf8bade249f856a80a94000737d01c0ffcfdd3e; _zcsr_tmp=ac9542dc9f34d6db5f96d5db18f5a15e83f03bcbe86cf6f002459adc123e0ee2d2a61a9feb77423bcc9bac6f8bf8bade249f856a80a94000737d01c0ffcfdd3e; PORTALID=301
