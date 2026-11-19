@@ -1,1 +1,6 @@
 https://youtube.com/playlist?list=PLsol1h0E6f7BfXvYrgqOdVZM81mGFqmFU&si=WR0XhyKkdYEV6sMU
+
+
+
+python -m pip install requests
+python descargar_adjuntos.py --solo-probar
