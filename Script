@@ -1,0 +1,370 @@
+Requerimos crear un script para descargar archivos desde la sigueinte URL
+
+https://mesadeservicio.colfondos.com.co/api/v3/requests/100003054/attachments/100024721/_download
+
+en donde el numero 100003054 = numero de ticket
+en donde el numero 100024721 = id del adjunto
+
+para poder acceder se requiere hacer un logueo entonvces debemos validar 
+si registramos las credenciales o buscamos la cookie de sesion y/o token para poder registrarla
+
+Debemos de crear unba carpeta en mis documentos con el numero de ticket y dentro de esta se guardan los adjuntos
+
+Consideraciones
+
+* se debe generar un archivo  plano indicando el numero del ticket, la cantidad de archivos descargados y el nombre del archivo con su extencion
+
+* validar que el ticket tenga archivos adjuntos, en caso que no debemos indicarlo en el archivo plano
+
+* en caso de que no exista el número de ticket debemos pasar al siguiente
+
+* la cuenta es regresiva tanto en el numero de ticket como en el consecutivo del adjunto
+
+ejemplo el numero del ticket es 100003054, y se tienen como adjuntow 100024721, 100024720 y 100024719, 
+estos tres archivos se guardaran en dicha carpeta 
+
+
+a continuaion un ejjemplo de como quedarian Las URLS de descargas serian
+
+a continuacion una URL que no coincide y/o no tiene adjuntos 
+https://mesadeservicio.colfondos.com.co/api/v3/requests/100001497/attachments/100024721/_download
+
+La peticion en el header devuelve lo siguiente 
+Request URL
+https://mesadeservicio.colfondos.com.co/api/v3/requests/100001497/attachments/100024721/_download
+Request method
+GET
+Status code
+404 Not Found
+Remote address
+172.18.167.15:443
+Referrer policy
+strict-origin-when-cross-origin
+
+
+https://mesadeservicio.colfondos.com.co/api/v3/requests/100003054/attachments/100024722/_download
+
+cuando coincide el numero del ticket con el consecutivo de los adjuntos el header devuelve 
+Request URL
+https://mesadeservicio.colfondos.com.co/api/v3/requests/100003054/attachments/100024720/_download
+Request method
+GET
+Status code
+200 OK
+Remote address
+172.18.167.15:443
+Referrer policy
+strict-origin-when-cross-origin
+
+caso donde no hay ticket 
+
+  https://mesadeservicio.colfondos.com.co/api/v3/requests/100003053
+
+A continuacion indico los números de los tickets requeridos
+
+
+  "100003054",
+  "100003053",
+  "100003051",
+  "100003049",
+  "100003048",
+  "100003045",
+  "100003044",
+  "100003042",
+  "100003035",
+  "100003017",
+  "100003016",
+  "100003013",
+  "100003012",
+  "100003010",
+  "100002992",
+  "100002986",
+  "100002985",
+  "100002983",
+  "100002978",
+  "100002964",
+  "100002962",
+  "100002956",
+  "100002955",
+  "100002954",
+  "100002941",
+  "100002932",
+  "100002931",
+  "100002928",
+  "100002924",
+  "100002915",
+  "100002914",
+  "100002909",
+  "100002905",
+  "100002903",
+  "100002902",
+  "100002901",
+  "100002900",
+  "100002896",
+  "100002893",
+  "100002892",
+  "100002878",
+  "100002876",
+  "100002875",
+  "100002874",
+  "100002873",
+  "100002872",
+  "100002847",
+  "100002846",
+  "100002845",
+  "100002844",
+  "100002831",
+  "100002817",
+  "100002805",
+  "100002797",
+  "100002796",
+  "100002795",
+  "100002790",
+  "100002787",
+  "100002780",
+  "100002777",
+  "100002773",
+  "100002760",
+  "100002757",
+  "100002756",
+  "100002754",
+  "100002753",
+  "100002751",
+  "100002749",
+  "100002730",
+  "100002729",
+  "100002728",
+  "100002723",
+  "100002710",
+  "100002709",
+  "100002702",
+  "100002701",
+  "100002680",
+  "100002679",
+  "100002675",
+  "100002671",
+  "100002663",
+  "100002662",
+  "100002657",
+  "100002650",
+  "100002646",
+  "100002644",
+  "100002631",
+  "100002630",
+  "100002627",
+  "100002616",
+  "100002612",
+  "100002611",
+  "100002599",
+  "100002586",
+  "100002574",
+  "100002568",
+  "100002567",
+  "100002555",
+  "100002554",
+  "100002548",
+  "100002533",
+  "100002532",
+  "100002531",
+  "100002530",
+  "100002523",
+  "100002522",
+  "100002498",
+  "100002497",
+  "100002489",
+  "100002488",
+  "100002470",
+  "100002469",
+  "100002462",
+  "100002461",
+  "100002454",
+  "100002452",
+  "100002451",
+  "100002449",
+  "100002429",
+  "100002418",
+  "100002399",
+  "100002379",
+  "100002365",
+  "100002362",
+  "100002345",
+  "100002337",
+  "100002318",
+  "100002317",
+  "100002306",
+  "100002305",
+  "100002299",
+  "100002297",
+  "100002292",
+  "100002284",
+  "100002282",
+  "100002280",
+  "100002279",
+  "100002278",
+  "100002272",
+  "100002271",
+  "100002267",
+  "100002257",
+  "100002254",
+  "100002243",
+  "100002242",
+  "100002229",
+  "100002228",
+  "100002221",
+  "100002215",
+  "100002212",
+  "100002209",
+  "100002208",
+  "100002201",
+  "100002197",
+  "100002196",
+  "100002195",
+  "100002193",
+  "100002191",
+  "100002188",
+  "100002183",
+  "100002182",
+  "100002181",
+  "100002179",
+  "100002178",
+  "100002170",
+  "100002168",
+  "100002167",
+  "100002162",
+  "100002160",
+  "100002159",
+  "100002154",
+  "100002153",
+  "100002152",
+  "100002150",
+  "100002147",
+  "100002139",
+  "100002138",
+  "100002137",
+  "100002136",
+  "100002135",
+  "100002132",
+  "100002126",
+  "100002125",
+  "100002124",
+  "100002123",
+  "100002121",
+  "100002108",
+  "100002106",
+  "100002103",
+  "100002102",
+  "100002101",
+  "100002100",
+  "100002085",
+  "100002079",
+  "100002061",
+  "100002048",
+  "100002046",
+  "100002030",
+  "100002024",
+  "100002015",
+  "100002014",
+  "100002006",
+  "100001993",
+  "100001987",
+  "100001982",
+  "100001977",
+  "100001976",
+  "100001963",
+  "100001960",
+  "100001954",
+  "100001949",
+  "100001948",
+  "100001947",
+  "100001939",
+  "100001930",
+  "100001929",
+  "100001916",
+  "100001913",
+  "100001907",
+  "100001900",
+  "100001899",
+  "100001888",
+  "100001885",
+  "100001883",
+  "100001863",
+  "100001857",
+  "100001854",
+  "100001853",
+  "100001849",
+  "100001842",
+  "100001840",
+  "100001829",
+  "100001803",
+  "100001802",
+  "100001795",
+  "100001783",
+  "100001782",
+  "100001780",
+  "100001762",
+  "100001757",
+  "100001747",
+  "100001745",
+  "100001744",
+  "100001743",
+  "100001737",
+  "100001736",
+  "100001735",
+  "100001728",
+  "100001727",
+  "100001718",
+  "100001715",
+  "100001711",
+  "100001709",
+  "100001707",
+  "100001679",
+  "100001677",
+  "100001676",
+  "100001665",
+  "100001650",
+  "100001636",
+  "100001635",
+  "100001629",
+  "100001615",
+  "100001604",
+  "100001603",
+  "100001597",
+  "100001594",
+  "100001591",
+  "100001590",
+  "100001586",
+  "100001575",
+  "100001574",
+  "100001566",
+  "100001535",
+  "100001530",
+  "100001497",
+  "100001496",
+  "100001495",
+  "100001481",
+  "100001473",
+  "100001472",
+  "100001470",
+  "100001468",
+  "100001461",
+  "100001460",
+  "100001459"
+
+
+
+El id de los adjuntos comienza en 100024721 de hay en cuenta regresiva en menos uno , 100024720, 100024719 y asi, 
+en que momento cambiamos de ticket, cuando el header nos responda 404 ejemplo
+
+https://mesadeservicio.colfondos.com.co/api/v3/requests/100003054/attachments/100024719/_download esta URL ya genera 404 en el header,
+
+modificamos el numero del ticket, se gun el listado anexo 
+
+https://mesadeservicio.colfondos.com.co/api/v3/requests/100003053/attachments/100024719/_download esta url respondio en el header 200
+
+probamos otro id
+https://mesadeservicio.colfondos.com.co/api/v3/requests/100003053/attachments/100024718/_download  esta URL ya genera 404, 
+entonces modificamos el número del ticket con el siguiente en la lista,
+
+
+ese seria el comportamiento hasta finalizar todos los numeros de los tickets  
+
