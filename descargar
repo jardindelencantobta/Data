@@ -153,6 +153,94 @@ def log(msg: str, archivo_log=None):
         archivo_log.flush()
 
 
+
+# ----------------------------------------------------------------------------
+# Interpretación de respuestas del servidor (mensajes personalizados)
+# ----------------------------------------------------------------------------
+MSG_SESION = ("La sesión expiró o la cookie ya no es válida.\n"
+              "  -> Recargue la mesa de servicio en el navegador (F5) e inicie sesión.\n"
+              "  -> Copie la nueva cabecera Cookie (Network > petición de descarga > "
+              "Request Headers > Copy value)\n"
+              "  -> Péguela en COOKIE_SESION dentro del script y vuelva a ejecutar.")
+
+TIPOS = {
+    "ok": "Respuesta correcta",
+    "no_existe": "No existe",
+    "sesion": "Sesión expirada",
+    "permiso": "Sin permiso",
+    "limite": "Demasiadas peticiones",
+    "servidor": "Error del servidor",
+    "otro": "Respuesta inesperada",
+}
+
+
+def leer_error_sdp(resp):
+    """Extrae códigos y mensajes del JSON de error de ServiceDesk Plus."""
+    codigos, mensajes = set(), []
+    try:
+        data = resp.json()
+    except ValueError:
+        return codigos, ""
+    estado = data.get("response_status", {}) if isinstance(data, dict) else {}
+    if isinstance(estado, list):
+        estado = estado[0] if estado else {}
+    if estado.get("status_code"):
+        codigos.add(int(estado["status_code"]))
+    for m in estado.get("messages", []) or []:
+        if m.get("status_code"):
+            try:
+                codigos.add(int(m["status_code"]))
+            except (TypeError, ValueError):
+                pass
+        if m.get("message"):
+            mensajes.append(str(m["message"]))
+    return codigos, "; ".join(mensajes)
+
+
+def interpretar(resp, esperado_json=False):
+    """Clasifica una respuesta. Devuelve (tipo, mensaje en español)."""
+    code = resp.status_code
+    ctype = resp.headers.get("Content-Type", "").lower()
+    loc = resp.headers.get("Location", "").lower()
+
+    if code in (301, 302, 303, 307, 308):
+        if "login" in loc or "j_security_check" in loc or "auth" in loc:
+            return "sesion", MSG_SESION
+        return "otro", f"El servidor redirige a {resp.headers.get('Location')} (HTTP {code})."
+
+    if code == 200:
+        es_html = "text/html" in ctype and "Content-Disposition" not in resp.headers
+        if es_html:
+            return "sesion", ("El servidor devolvió una página web (posible pantalla de "
+                              "inicio de sesión) en vez de datos.\n" + MSG_SESION)
+        return "ok", "Respuesta correcta (HTTP 200)."
+
+    codigos, detalle = leer_error_sdp(resp) if "json" in ctype else (set(), "")
+    sufijo = f"\n  Mensaje del servidor: {detalle}" if detalle else ""
+    texto = detalle.lower()
+
+    if code == 401 or 4002 in codigos or "unauthori" in texto or "session" in texto \
+            or "sesión" in texto or "login" in texto:
+        return "sesion", MSG_SESION + sufijo
+    if code == 403 or 7001 in codigos or "permission" in texto or "permiso" in texto:
+        if not codigos and not detalle:
+            # 403 sin detalle: en esta mesa de servicio suele ser sesión vencida o CSRF
+            return "sesion", "El servidor rechazó la petición (HTTP 403).\n" + MSG_SESION
+        return "permiso", ("Su usuario no tiene permiso para ver este ticket o adjunto. "
+                           "Se omite y se continúa." + sufijo)
+    if code == 404 or 4007 in codigos:
+        return "no_existe", "El ticket o el adjunto no existe (HTTP 404)." + sufijo
+    if code == 429 or 4015 in codigos:
+        return "limite", ("El servidor está limitando la cantidad de peticiones (HTTP 429). "
+                          "Vuelva a ejecutar con una pausa mayor, por ejemplo --pausa 1." + sufijo)
+    if code >= 500:
+        return "servidor", (f"La mesa de servicio tuvo un error interno (HTTP {code}). "
+                            "Puede ser temporal: intente de nuevo en unos minutos." + sufijo)
+    if code == 400:
+        return "otro", ("El servidor rechazó la petición (HTTP 400). Si se repite en todos "
+                        "los tickets, probablemente la sesión expiró." + sufijo)
+    return "otro", f"Respuesta inesperada del servidor (HTTP {code})." + sufijo
+
 # ----------------------------------------------------------------------------
 # Cliente HTTP
 # ----------------------------------------------------------------------------
@@ -166,7 +254,7 @@ class Cliente:
         self.s.verify = verificar_ssl
         reintentos = Retry(total=4, backoff_factor=1.5,
                            status_forcelist=(429, 500, 502, 503, 504),
-                           allowed_methods=("GET",))
+                           allowed_methods=("GET",), raise_on_status=False)
         self.s.mount("https://", HTTPAdapter(max_retries=reintentos))
         self.s.mount("http://", HTTPAdapter(max_retries=reintentos))
         self.s.headers["User-Agent"] = "descargar-adjuntos/1.0"
@@ -185,33 +273,31 @@ class Cliente:
         time.sleep(self.pausa)
         resp = self.s.get(self.base + path, timeout=self.timeout,
                           allow_redirects=False, **kw)
-        if resp.status_code in (401, 403) or (
-            resp.status_code in (301, 302, 303, 307, 308)
-            and "login" in resp.headers.get("Location", "").lower()
-        ):
-            raise SesionInvalida(
-                f"HTTP {resp.status_code} en {path}. La sesión expiró o la credencial no es válida."
-            )
+        if resp.status_code != 200 or "text/html" in resp.headers.get("Content-Type", "").lower():
+            tipo, mensaje = interpretar(resp)
+            if tipo == "sesion":
+                resp.close()
+                raise SesionInvalida(mensaje)
         return resp
 
     def ticket_existe(self, ticket):
-        """True si existe, False si 404; None si no se pudo determinar."""
+        """Devuelve (estado, mensaje). estado: True existe, False no existe, None dudoso."""
         r = self._get(f"/api/v3/requests/{ticket}", headers={"Accept": API_ACCEPT})
-        if r.status_code == 200:
-            return True
-        if r.status_code == 404:
-            return False
-        # Algunas instalaciones devuelven 400 con un JSON de error para ids inexistentes
-        if r.status_code == 400 and "4007" in r.text:
-            return False
-        return None
+        tipo, mensaje = interpretar(r)
+        if tipo == "ok":
+            return True, tipo, mensaje
+        if tipo == "no_existe":
+            return False, tipo, mensaje
+        return None, tipo, mensaje
 
     def listar_adjuntos(self, ticket):
         r = self._get(f"/api/v3/requests/{ticket}/attachments",
                       headers={"Accept": API_ACCEPT})
-        if r.status_code == 404:
+        tipo, mensaje = interpretar(r)
+        if tipo == "no_existe":
             return []
-        r.raise_for_status()
+        if tipo != "ok":
+            raise RuntimeError(mensaje)
         return [str(a["id"]) for a in r.json().get("attachments", [])]
 
     def descargar(self, ticket, adjunto, carpeta: Path):
@@ -219,15 +305,11 @@ class Cliente:
         r = self._get(f"/api/v3/requests/{ticket}/attachments/{adjunto}/_download",
                       stream=True)
         try:
-            if r.status_code == 404:
+            tipo, mensaje = interpretar(r)
+            if tipo == "no_existe":
                 return None
-            if r.status_code != 200:
-                raise RuntimeError(f"HTTP {r.status_code} inesperado")
-            ctype = r.headers.get("Content-Type", "").lower()
-            if "text/html" in ctype and "Content-Disposition" not in r.headers:
-                # Respuesta típica de una pantalla de login, no de un archivo
-                raise SesionInvalida("El servidor devolvió una página HTML en vez del archivo "
-                                     "(probablemente la sesión expiró).")
+            if tipo != "ok":
+                raise RuntimeError(mensaje)
             carpeta.mkdir(parents=True, exist_ok=True)
             nombre = nombre_desde_cabecera(r, f"adjunto_{adjunto}")
             destino = ruta_sin_colision(carpeta, nombre)
@@ -255,7 +337,7 @@ def procesar(cliente, tickets, id_inicial, destino_base: Path, modo, flog, estad
         archivos = []
 
         try:
-            existe = cliente.ticket_existe(ticket)
+            existe, tipo_ticket, msg_ticket = cliente.ticket_existe(ticket)
         except requests.exceptions.SSLError:
             raise
         except requests.RequestException as e:
@@ -266,6 +348,13 @@ def procesar(cliente, tickets, id_inicial, destino_base: Path, modo, flog, estad
             log(f"  Ticket {ticket} no existe. Se pasa al siguiente.", flog)
             resumen.append((ticket, "NO EXISTE", []))
             continue
+        if tipo_ticket == "permiso":
+            log(f"  {msg_ticket}", flog)
+            resumen.append((ticket, "SIN PERMISO", []))
+            continue
+        if existe is None:
+            log(f"  Aviso al consultar el ticket: {msg_ticket}", flog)
+            log("  Se intentará descargar sus adjuntos de todas formas.", flog)
 
         try:
             if modo == "listado":
@@ -299,7 +388,8 @@ def procesar(cliente, tickets, id_inicial, destino_base: Path, modo, flog, estad
             continue
         except RuntimeError as e:
             log(f"  ERROR en ticket {ticket}: {e}", flog)
-            resumen.append((ticket, f"ERROR: {e}", archivos))
+            primera = str(e).splitlines()[0]
+            resumen.append((ticket, f"ERROR: {primera}", archivos))
             continue
 
         estado = "CON ADJUNTOS" if archivos else "SIN ADJUNTOS"
@@ -332,6 +422,44 @@ def escribir_reporte(ruta: Path, resumen, id_final, modo):
             else:
                 f.write("Archivos: ninguno\n")
             f.write("-" * 70 + "\n")
+
+
+def diagnostico(cliente, ticket, adjunto):
+    """Muestra qué responde el servidor, sin guardar nada."""
+    pruebas = [
+        ("Consulta del ticket", f"/api/v3/requests/{ticket}", {"Accept": API_ACCEPT}),
+        ("Descarga de adjunto", f"/api/v3/requests/{ticket}/attachments/{adjunto}/_download", {}),
+    ]
+    print(f"Certificados de Windows (truststore): {'sí' if USA_TRUSTSTORE else 'no'}")
+    for titulo, path, headers in pruebas:
+        print("\n" + "=" * 60)
+        print(f"{titulo}: {path}")
+        try:
+            time.sleep(cliente.pausa)
+            r = cliente.s.get(cliente.base + path, headers=headers, timeout=cliente.timeout,
+                              allow_redirects=False, stream=True)
+        except requests.exceptions.SSLError:
+            sys.exit(MSG_SSL)
+        except requests.RequestException as e:
+            sys.exit(f"No se pudo conectar con el servidor: {e}")
+        print(f"  Código HTTP:          {r.status_code}")
+        print(f"  Content-Type:         {r.headers.get('Content-Type', '-')}")
+        print(f"  Content-Disposition:  {r.headers.get('Content-Disposition', '-')}")
+        if r.headers.get("Location"):
+            print(f"  Redirige a:           {r.headers['Location']}")
+        ctype = r.headers.get("Content-Type", "").lower()
+        es_texto = "json" in ctype or "text" in ctype or "html" in ctype
+        if r.status_code != 200 or ("html" in ctype and "Content-Disposition" not in r.headers):
+            r.content  # leer el cuerpo para poder interpretar el error
+        tipo, mensaje = interpretar(r)
+        print(f"  Resultado:            {TIPOS[tipo]}")
+        if tipo != "ok":
+            print("  " + mensaje.replace("\n", "\n  "))
+        if es_texto and tipo != "ok":
+            print("  Inicio de la respuesta:")
+            print("   " + r.text.replace("\n", " ")[:400])
+        r.close()
+    print("\nSi la descarga dice 'Respuesta correcta', ya puede ejecutar el proceso completo.")
 
 
 def main():
@@ -381,16 +509,7 @@ def main():
                       verificar_ssl=not args.no_verificar_ssl, pausa=args.pausa)
 
     if args.solo_probar:
-        try:
-            r = cliente.ticket_existe(tickets[0])
-            print(f"Conexión OK. Ticket {tickets[0]}: "
-                  f"{'existe' if r else 'no existe' if r is False else 'respuesta no concluyente'}")
-        except SesionInvalida as e:
-            sys.exit(f"Credencial inválida: {e}")
-        except requests.exceptions.SSLError:
-            sys.exit(MSG_SSL)
-        except requests.RequestException as e:
-            sys.exit(f"No se pudo conectar con el servidor: {e}")
+        diagnostico(cliente, tickets[0], args.id_inicial)
         return
 
     marca = datetime.now().strftime("%Y%m%d_%H%M%S")
@@ -406,8 +525,8 @@ def main():
                      flog, estado_global)
         except SesionInvalida as e:
             log(f"PROCESO DETENIDO: {e}", flog)
-            log("Renueve la cookie/token y vuelva a ejecutar con --id-inicial y la lista "
-                "de tickets pendientes.", flog)
+            log(f"Para continuar donde quedó, ejecute con:  --id-inicial {estado_global['id_actual']}"
+                " y deje en Tickets.txt solo los tickets pendientes (vea el reporte).", flog)
             codigo = 2
         except requests.exceptions.SSLError:
             log(MSG_SSL, flog)
