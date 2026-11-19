@@ -4,3 +4,8 @@ https://youtube.com/playlist?list=PLsol1h0E6f7BfXvYrgqOdVZM81mGFqmFU&si=WR0XhyKk
 
 python -m pip install requests
 python descargar_adjuntos.py --solo-probar
+
+
+python "Descargar adjuntos.py" --solo-probar
+
+python "Descargar adjuntos.py"
