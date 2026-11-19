@@ -11,3 +11,5 @@ python "Descargar adjuntos.py" --solo-probar
 python "Descargar adjuntos.py"
 
 python -m pip install truststore
+
+python "Descargar adjuntos.py" --solo-probar --no-verificar-ssl
