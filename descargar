@@ -1,0 +1,397 @@
+#!/usr/bin/env python3
+"""
+Descarga los adjuntos de tickets de la Mesa de Servicio (ServiceDesk Plus, API v3).
+
+Lógica (modo "secuencial", por defecto):
+  - Se recorre la lista de tickets en orden.
+  - El id de adjunto arranca en ID_INICIAL y baja de 1 en 1.
+  - Mientras la descarga responda 200, se guarda el archivo y se prueba id - 1
+    con el MISMO ticket.
+  - Cuando responde 404, se pasa al SIGUIENTE ticket conservando el mismo id.
+  - Si el ticket no existe, se registra y se pasa al siguiente.
+
+Modo "listado" (opcional, --modo listado): consulta a la API la lista real de
+adjuntos de cada ticket y los descarga, sin depender de que los ids sean
+consecutivos.
+
+Autenticación (elija una):
+  - API key de técnico:  variable SDP_AUTHTOKEN  o  --authtoken
+  - Cookie de sesión del navegador: variable SDP_COOKIE  o  --cookie
+  - O la constante COOKIE_SESION definida más abajo en este archivo.
+  Si no se da ninguna, el script la pide por consola (sin mostrarla).
+
+Uso:
+  python descargar_adjuntos.py
+  python descargar_adjuntos.py --tickets tickets.txt --id-inicial 100024721
+  python descargar_adjuntos.py --modo listado
+  python descargar_adjuntos.py --solo-probar
+"""
+
+import argparse
+import getpass
+import os
+import re
+import sys
+import time
+from datetime import datetime
+from pathlib import Path
+from urllib.parse import unquote
+
+try:
+    import requests
+    from requests.adapters import HTTPAdapter
+    from urllib3.util.retry import Retry
+except ImportError:
+    sys.exit("Falta la librería 'requests'. Instálela con:  pip install requests")
+
+BASE_URL = "https://mesadeservicio.colfondos.com.co"
+ID_INICIAL = 100024721
+API_ACCEPT = "application/vnd.manageengine.sdp.v3+json"
+
+# Cookie de sesión del navegador. Cuando la sesión expire, reemplace este valor
+# por el nuevo (Network -> petición de descarga -> Request Headers -> Cookie).
+COOKIE_SESION = (
+    "SDPSESSIONID=D5596C960970BA5AAFE55896E0346DD7; "
+    "JSESSIONIDSDP=7F404B343D36D99E875DDF88BB364B7B; "
+    "_rem=true; "
+    "febbc30d=2166047140b54f2fba2483077c88a3aa; "
+    "mesdp2776bc546c=bb84c60a70ce379d7e07dff181cd0147356b317fde6e2c2cc6de9c11633289ab; "
+    "sdpcsrfcookie=ca8bacb48240e7b48b37a627e9551f180a9992ad3cbd400a0504c48047e70c0134762bffa4e1504293dec2fbc58d801c4d061ae6c86f1604113910482b4fec60; "
+    "_zcsr_tmp=ca8bacb48240e7b48b37a627e9551f180a9992ad3cbd400a0504c48047e70c0134762bffa4e1504293dec2fbc58d801c4d061ae6c86f1604113910482b4fec60; "
+    "PORTALID=301"
+)
+
+
+class SesionInvalida(Exception):
+    """La sesión expiró o las credenciales no son válidas."""
+
+
+# ----------------------------------------------------------------------------
+# Utilidades
+# ----------------------------------------------------------------------------
+def carpeta_documentos() -> Path:
+    """Devuelve la carpeta 'Mis documentos' del usuario (Windows, con o sin OneDrive)."""
+    if os.name == "nt":
+        try:
+            import ctypes
+            from ctypes import wintypes
+
+            buf = ctypes.create_unicode_buffer(wintypes.MAX_PATH)
+            # CSIDL_PERSONAL = 5 -> "Mis documentos" real (respeta redirección a OneDrive)
+            ctypes.windll.shell32.SHGetFolderPathW(None, 5, None, 0, buf)
+            if buf.value:
+                return Path(buf.value)
+        except Exception:
+            pass
+    return Path.home() / "Documents"
+
+
+def leer_tickets(ruta: Path) -> list:
+    """Lee los números de ticket de un archivo (acepta una lista con comillas/comas)."""
+    texto = ruta.read_text(encoding="utf-8")
+    tickets = re.findall(r"\d{6,}", texto)
+    vistos, unicos = set(), []
+    for t in tickets:
+        if t not in vistos:
+            vistos.add(t)
+            unicos.append(t)
+    return unicos
+
+
+def nombre_seguro(nombre: str) -> str:
+    nombre = re.sub(r'[<>:"/\\|?*\x00-\x1f]', "_", nombre).strip(" .")
+    return nombre or "adjunto"
+
+
+def nombre_desde_cabecera(resp, respaldo: str) -> str:
+    cd = resp.headers.get("Content-Disposition", "")
+    m = re.search(r"filename\*\s*=\s*[^']*'[^']*'([^;]+)", cd, re.I)
+    if m:
+        return nombre_seguro(unquote(m.group(1).strip().strip('"')))
+    m = re.search(r'filename\s*=\s*"?([^";]+)"?', cd, re.I)
+    if m:
+        crudo = m.group(1).strip()
+        try:  # algunos servidores mandan UTF-8 interpretado como latin-1
+            crudo = crudo.encode("latin-1").decode("utf-8")
+        except (UnicodeEncodeError, UnicodeDecodeError):
+            pass
+        return nombre_seguro(unquote(crudo))
+    return respaldo
+
+
+def ruta_sin_colision(carpeta: Path, nombre: str) -> Path:
+    destino = carpeta / nombre
+    base, ext = os.path.splitext(nombre)
+    n = 1
+    while destino.exists():
+        destino = carpeta / f"{base}_{n}{ext}"
+        n += 1
+    return destino
+
+
+def log(msg: str, archivo_log=None):
+    linea = f"[{datetime.now():%Y-%m-%d %H:%M:%S}] {msg}"
+    print(linea, flush=True)
+    if archivo_log:
+        archivo_log.write(linea + "\n")
+        archivo_log.flush()
+
+
+# ----------------------------------------------------------------------------
+# Cliente HTTP
+# ----------------------------------------------------------------------------
+class Cliente:
+    def __init__(self, base_url, authtoken=None, cookie=None, verificar_ssl=True,
+                 pausa=0.2, timeout=60):
+        self.base = base_url.rstrip("/")
+        self.pausa = pausa
+        self.timeout = timeout
+        self.s = requests.Session()
+        self.s.verify = verificar_ssl
+        reintentos = Retry(total=4, backoff_factor=1.5,
+                           status_forcelist=(429, 500, 502, 503, 504),
+                           allowed_methods=("GET",))
+        self.s.mount("https://", HTTPAdapter(max_retries=reintentos))
+        self.s.mount("http://", HTTPAdapter(max_retries=reintentos))
+        self.s.headers["User-Agent"] = "descargar-adjuntos/1.0"
+        if authtoken:
+            self.s.headers["authtoken"] = authtoken
+        if cookie:
+            cookie = re.sub(r"^\s*cookie\s*:\s*", "", cookie, flags=re.I).strip()
+            self.s.headers["Cookie"] = cookie
+            # ServiceDesk Plus valida el token CSRF en las llamadas a la API con sesión web
+            m = re.search(r"(?:^|;\s*)sdpcsrfcookie=([^;]+)", cookie)
+            if m:
+                self.s.headers["X-ZCSRF-TOKEN"] = f"sdpcsrfparam={m.group(1)}"
+            self.s.headers["X-Requested-With"] = "XMLHttpRequest"
+
+    def _get(self, path, **kw):
+        time.sleep(self.pausa)
+        resp = self.s.get(self.base + path, timeout=self.timeout,
+                          allow_redirects=False, **kw)
+        if resp.status_code in (401, 403) or (
+            resp.status_code in (301, 302, 303, 307, 308)
+            and "login" in resp.headers.get("Location", "").lower()
+        ):
+            raise SesionInvalida(
+                f"HTTP {resp.status_code} en {path}. La sesión expiró o la credencial no es válida."
+            )
+        return resp
+
+    def ticket_existe(self, ticket):
+        """True si existe, False si 404; None si no se pudo determinar."""
+        r = self._get(f"/api/v3/requests/{ticket}", headers={"Accept": API_ACCEPT})
+        if r.status_code == 200:
+            return True
+        if r.status_code == 404:
+            return False
+        # Algunas instalaciones devuelven 400 con un JSON de error para ids inexistentes
+        if r.status_code == 400 and "4007" in r.text:
+            return False
+        return None
+
+    def listar_adjuntos(self, ticket):
+        r = self._get(f"/api/v3/requests/{ticket}/attachments",
+                      headers={"Accept": API_ACCEPT})
+        if r.status_code == 404:
+            return []
+        r.raise_for_status()
+        return [str(a["id"]) for a in r.json().get("attachments", [])]
+
+    def descargar(self, ticket, adjunto, carpeta: Path):
+        """Devuelve el nombre del archivo guardado, o None si responde 404."""
+        r = self._get(f"/api/v3/requests/{ticket}/attachments/{adjunto}/_download",
+                      stream=True)
+        try:
+            if r.status_code == 404:
+                return None
+            if r.status_code != 200:
+                raise RuntimeError(f"HTTP {r.status_code} inesperado")
+            ctype = r.headers.get("Content-Type", "").lower()
+            if "text/html" in ctype and "Content-Disposition" not in r.headers:
+                # Respuesta típica de una pantalla de login, no de un archivo
+                raise SesionInvalida("El servidor devolvió una página HTML en vez del archivo "
+                                     "(probablemente la sesión expiró).")
+            carpeta.mkdir(parents=True, exist_ok=True)
+            nombre = nombre_desde_cabecera(r, f"adjunto_{adjunto}")
+            destino = ruta_sin_colision(carpeta, nombre)
+            temporal = destino.with_name(destino.name + ".part")
+            with open(temporal, "wb") as f:
+                for bloque in r.iter_content(chunk_size=1024 * 256):
+                    if bloque:
+                        f.write(bloque)
+            temporal.replace(destino)
+            return destino.name
+        finally:
+            r.close()
+
+
+# ----------------------------------------------------------------------------
+# Proceso principal
+# ----------------------------------------------------------------------------
+def procesar(cliente, tickets, id_inicial, destino_base: Path, modo, flog, estado_global):
+    resumen = estado_global["resumen"]  # (ticket, estado, [archivos])
+    id_actual = id_inicial
+
+    for i, ticket in enumerate(tickets, 1):
+        log(f"({i}/{len(tickets)}) Ticket {ticket}", flog)
+        carpeta = destino_base / ticket
+        archivos = []
+
+        existe = cliente.ticket_existe(ticket)
+        if existe is False:
+            log(f"  Ticket {ticket} no existe. Se pasa al siguiente.", flog)
+            resumen.append((ticket, "NO EXISTE", []))
+            continue
+
+        try:
+            if modo == "listado":
+                ids = cliente.listar_adjuntos(ticket)
+                for adj in ids:
+                    nombre = cliente.descargar(ticket, adj, carpeta)
+                    if nombre:
+                        archivos.append(nombre)
+                        log(f"  OK  adjunto {adj} -> {nombre}", flog)
+                    else:
+                        log(f"  404 adjunto {adj} (listado pero no descargable)", flog)
+            else:
+                while id_actual > 0:
+                    nombre = cliente.descargar(ticket, id_actual, carpeta)
+                    if nombre is None:
+                        log(f"  404 en adjunto {id_actual}. Cambio de ticket.", flog)
+                        break
+                    archivos.append(nombre)
+                    log(f"  OK  adjunto {id_actual} -> {nombre}", flog)
+                    id_actual -= 1
+                    estado_global["id_actual"] = id_actual
+        except SesionInvalida:
+            resumen.append((ticket, "INTERRUMPIDO", archivos))
+            raise
+        except requests.RequestException as e:
+            log(f"  ERROR de red en ticket {ticket}: {e}", flog)
+            resumen.append((ticket, f"ERROR: {e}", archivos))
+            continue
+        except RuntimeError as e:
+            log(f"  ERROR en ticket {ticket}: {e}", flog)
+            resumen.append((ticket, f"ERROR: {e}", archivos))
+            continue
+
+        estado = "CON ADJUNTOS" if archivos else "SIN ADJUNTOS"
+        if not archivos:
+            log("  El ticket no tiene adjuntos.", flog)
+        resumen.append((ticket, estado, archivos))
+
+    return resumen, id_actual
+
+
+def escribir_reporte(ruta: Path, resumen, id_final, modo):
+    total = sum(len(a) for _, _, a in resumen)
+    with open(ruta, "w", encoding="utf-8") as f:
+        f.write("REPORTE DE DESCARGA DE ADJUNTOS\n")
+        f.write(f"Fecha: {datetime.now():%Y-%m-%d %H:%M:%S}\n")
+        f.write(f"Modo: {modo}\n")
+        f.write(f"Tickets procesados: {len(resumen)}\n")
+        f.write(f"Total de archivos descargados: {total}\n")
+        if modo == "secuencial":
+            f.write(f"Último id de adjunto probado: {id_final}\n")
+        f.write("=" * 70 + "\n\n")
+        for ticket, estado, archivos in resumen:
+            f.write(f"Ticket: {ticket}\n")
+            f.write(f"Estado: {estado}\n")
+            f.write(f"Cantidad de archivos descargados: {len(archivos)}\n")
+            if archivos:
+                f.write("Archivos:\n")
+                for a in archivos:
+                    f.write(f"  - {a}\n")
+            else:
+                f.write("Archivos: ninguno\n")
+            f.write("-" * 70 + "\n")
+
+
+def main():
+    p = argparse.ArgumentParser(description="Descarga adjuntos de tickets de la Mesa de Servicio.")
+    p.add_argument("--tickets", default=str(Path(__file__).with_name("tickets.txt")),
+                   help="Archivo con los números de ticket (por defecto tickets.txt junto al script)")
+    p.add_argument("--id-inicial", type=int, default=ID_INICIAL,
+                   help=f"Id del primer adjunto (por defecto {ID_INICIAL})")
+    p.add_argument("--destino", default=None,
+                   help="Carpeta base de descarga (por defecto Mis documentos/AdjuntosMesaServicio)")
+    p.add_argument("--modo", choices=("secuencial", "listado"), default="secuencial")
+    p.add_argument("--base-url", default=BASE_URL)
+    p.add_argument("--authtoken", default=os.environ.get("SDP_AUTHTOKEN"))
+    p.add_argument("--cookie", default=os.environ.get("SDP_COOKIE") or COOKIE_SESION or None)
+    p.add_argument("--no-verificar-ssl", action="store_true",
+                   help="No validar el certificado (solo si el servidor usa uno interno)")
+    p.add_argument("--pausa", type=float, default=0.2, help="Segundos entre peticiones")
+    p.add_argument("--solo-probar", action="store_true",
+                   help="Solo valida la credencial con el primer ticket y termina")
+    args = p.parse_args()
+
+    if not args.authtoken and not args.cookie:
+        print("No se encontró credencial (SDP_AUTHTOKEN o SDP_COOKIE).")
+        print("  1) API key de técnico (authtoken)")
+        print("  2) Cookie de sesión copiada del navegador")
+        op = input("Elija 1 o 2: ").strip()
+        if op == "1":
+            args.authtoken = getpass.getpass("Pegue el authtoken: ").strip()
+        else:
+            args.cookie = getpass.getpass("Pegue el valor completo de la cabecera Cookie: ").strip()
+
+    if args.no_verificar_ssl:
+        import urllib3
+        urllib3.disable_warnings()
+
+    ruta_tickets = Path(args.tickets)
+    if not ruta_tickets.exists():
+        sys.exit(f"No se encontró el archivo de tickets: {ruta_tickets}")
+    tickets = leer_tickets(ruta_tickets)
+    if not tickets:
+        sys.exit("El archivo de tickets no contiene números.")
+
+    destino_base = Path(args.destino) if args.destino else carpeta_documentos() / "AdjuntosMesaServicio"
+    destino_base.mkdir(parents=True, exist_ok=True)
+
+    cliente = Cliente(args.base_url, args.authtoken, args.cookie,
+                      verificar_ssl=not args.no_verificar_ssl, pausa=args.pausa)
+
+    if args.solo_probar:
+        try:
+            r = cliente.ticket_existe(tickets[0])
+            print(f"Conexión OK. Ticket {tickets[0]}: "
+                  f"{'existe' if r else 'no existe' if r is False else 'respuesta no concluyente'}")
+        except SesionInvalida as e:
+            sys.exit(f"Credencial inválida: {e}")
+        return
+
+    marca = datetime.now().strftime("%Y%m%d_%H%M%S")
+    ruta_log = destino_base / f"log_{marca}.txt"
+    ruta_reporte = destino_base / f"reporte_descargas_{marca}.txt"
+
+    print(f"Tickets a procesar: {len(tickets)}  |  Destino: {destino_base}")
+    estado_global = {"resumen": [], "id_actual": args.id_inicial}
+    codigo = 0
+    with open(ruta_log, "w", encoding="utf-8") as flog:
+        try:
+            procesar(cliente, tickets, args.id_inicial, destino_base, args.modo,
+                     flog, estado_global)
+        except SesionInvalida as e:
+            log(f"PROCESO DETENIDO: {e}", flog)
+            log("Renueve la cookie/token y vuelva a ejecutar con --id-inicial y la lista "
+                "de tickets pendientes.", flog)
+            codigo = 2
+        except KeyboardInterrupt:
+            log("Proceso cancelado por el usuario.", flog)
+            codigo = 130
+        finally:
+            resumen = estado_global["resumen"]
+            escribir_reporte(ruta_reporte, resumen, estado_global["id_actual"], args.modo)
+
+    total = sum(len(a) for _, _, a in resumen)
+    print(f"\nListo. Archivos descargados: {total}")
+    print(f"Reporte: {ruta_reporte}")
+    print(f"Log:     {ruta_log}")
+    sys.exit(codigo)
+
+
+if __name__ == "__main__":
+    main()
