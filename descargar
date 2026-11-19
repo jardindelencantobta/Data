@@ -60,13 +60,13 @@ API_ACCEPT = "application/vnd.manageengine.sdp.v3+json"
 # Cookie de sesión del navegador. Cuando la sesión expire, reemplace este valor
 # por el nuevo (Network -> petición de descarga -> Request Headers -> Cookie).
 COOKIE_SESION = (
-    "SDPSESSIONID=D5596C960970BA5AAFE55896E0346DD7; "
-    "JSESSIONIDSDP=7F404B343D36D99E875DDF88BB364B7B; "
+    "SDPSESSIONID=0F6E276ABAF3771235E7CDFCBB1DD556; "
+    "JSESSIONIDSDP=04A5A692B7E2E87055C7A28DDE80B78F; "
     "_rem=true; "
-    "febbc30d=2166047140b54f2fba2483077c88a3aa; "
-    "mesdp2776bc546c=bb84c60a70ce379d7e07dff181cd0147356b317fde6e2c2cc6de9c11633289ab; "
-    "sdpcsrfcookie=ca8bacb48240e7b48b37a627e9551f180a9992ad3cbd400a0504c48047e70c0134762bffa4e1504293dec2fbc58d801c4d061ae6c86f1604113910482b4fec60; "
-    "_zcsr_tmp=ca8bacb48240e7b48b37a627e9551f180a9992ad3cbd400a0504c48047e70c0134762bffa4e1504293dec2fbc58d801c4d061ae6c86f1604113910482b4fec60; "
+    "febbc30d=becbc901598f4105999453323037058b; "
+    "mesdp01dce551e7=4f32f1beb288350627db51ba8ab45d5b4977a37e8f3131ecde0ac0ccbecaa515; "
+    "sdpcsrfcookie=ac9542dc9f34d6db5f96d5db18f5a15e83f03bcbe86cf6f002459adc123e0ee2d2a61a9feb77423bcc9bac6f8bf8bade249f856a80a94000737d01c0ffcfdd3e; "
+    "_zcsr_tmp=ac9542dc9f34d6db5f96d5db18f5a15e83f03bcbe86cf6f002459adc123e0ee2d2a61a9feb77423bcc9bac6f8bf8bade249f856a80a94000737d01c0ffcfdd3e; "
     "PORTALID=301"
 )
 
@@ -76,6 +76,11 @@ MSG_SSL = (
     "Solución recomendada:  python -m pip install truststore  y vuelva a ejecutar.\n"
     "Alternativa rápida:    agregue --no-verificar-ssl al comando."
 )
+
+
+def kw_stream(resp):
+    """True si el cuerpo de la respuesta aún no se ha leído."""
+    return not getattr(resp, "_content_consumed", True)
 
 
 class SesionInvalida(Exception):
@@ -219,8 +224,9 @@ def interpretar(resp, esperado_json=False):
     sufijo = f"\n  Mensaje del servidor: {detalle}" if detalle else ""
     texto = detalle.lower()
 
-    if code == 401 or 4002 in codigos or "unauthori" in texto or "session" in texto \
-            or "sesión" in texto or "login" in texto:
+    if code == 401 or 401 in codigos or 4002 in codigos or "unauthori" in texto \
+            or "session" in texto or "sesión" in texto or "login" in texto \
+            or "autentic" in texto or "authentic" in texto or "token" in texto:
         return "sesion", MSG_SESION + sufijo
     if code == 403 or 7001 in codigos or "permission" in texto or "permiso" in texto:
         if not codigos and not detalle:
@@ -257,27 +263,57 @@ class Cliente:
                            allowed_methods=("GET",), raise_on_status=False)
         self.s.mount("https://", HTTPAdapter(max_retries=reintentos))
         self.s.mount("http://", HTTPAdapter(max_retries=reintentos))
-        self.s.headers["User-Agent"] = "descargar-adjuntos/1.0"
+        self.s.headers["User-Agent"] = ("Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
+                                        "AppleWebKit/537.36 (KHTML, like Gecko) "
+                                        "Chrome/130.0 Safari/537.36")
+        self.extra = {}          # cabeceras adicionales (CSRF) para sesión web
+        self.usar_extra = True
         if authtoken:
             self.s.headers["authtoken"] = authtoken
         if cookie:
             cookie = re.sub(r"^\s*cookie\s*:\s*", "", cookie, flags=re.I).strip()
             self.s.headers["Cookie"] = cookie
-            # ServiceDesk Plus valida el token CSRF en las llamadas a la API con sesión web
+            self.s.headers["Referer"] = self.base + "/WOListView.do"
+            # ServiceDesk Plus puede pedir el token CSRF en llamadas a la API con sesión web.
+            # Si el servidor lo rechaza, el script reintenta como lo hace el navegador (sin ellas).
             m = re.search(r"(?:^|;\s*)sdpcsrfcookie=([^;]+)", cookie)
             if m:
-                self.s.headers["X-ZCSRF-TOKEN"] = f"sdpcsrfparam={m.group(1)}"
-            self.s.headers["X-Requested-With"] = "XMLHttpRequest"
+                self.extra["X-ZCSRF-TOKEN"] = f"sdpcsrfparam={m.group(1)}"
+            self.extra["X-Requested-With"] = "XMLHttpRequest"
 
-    def _get(self, path, **kw):
+    def _pedir(self, path, headers=None, con_extra=True, **kw):
+        h = dict(headers or {})
+        if con_extra:
+            h.update(self.extra)
         time.sleep(self.pausa)
-        resp = self.s.get(self.base + path, timeout=self.timeout,
+        return self.s.get(self.base + path, headers=h, timeout=self.timeout,
                           allow_redirects=False, **kw)
-        if resp.status_code != 200 or "text/html" in resp.headers.get("Content-Type", "").lower():
-            tipo, mensaje = interpretar(resp)
-            if tipo == "sesion":
-                resp.close()
-                raise SesionInvalida(mensaje)
+
+    @staticmethod
+    def _tipo(resp):
+        if resp.status_code == 200 and "text/html" not in resp.headers.get("Content-Type", "").lower():
+            return "ok", ""
+        if kw_stream(resp):
+            resp.content  # leer el cuerpo del error para poder interpretarlo
+        return interpretar(resp)
+
+    def _get(self, path, headers=None, **kw):
+        resp = self._pedir(path, headers, con_extra=self.usar_extra and bool(self.extra), **kw)
+        tipo, mensaje = self._tipo(resp)
+        if tipo == "sesion" and self.usar_extra and self.extra:
+            # Reintentar como el navegador: solo con la cookie
+            resp.close()
+            resp2 = self._pedir(path, headers, con_extra=False, **kw)
+            tipo2, mensaje2 = self._tipo(resp2)
+            if tipo2 != "sesion":
+                self.usar_extra = False
+                print("  (Aviso: el servidor acepta la cookie sin cabeceras CSRF; "
+                      "se continúa en ese modo)")
+                return resp2
+            resp, mensaje = resp2, mensaje2
+        if tipo == "sesion":
+            resp.close()
+            raise SesionInvalida(mensaje)
         return resp
 
     def ticket_existe(self, ticket):
@@ -435,9 +471,11 @@ def diagnostico(cliente, ticket, adjunto):
         print("\n" + "=" * 60)
         print(f"{titulo}: {path}")
         try:
-            time.sleep(cliente.pausa)
-            r = cliente.s.get(cliente.base + path, headers=headers, timeout=cliente.timeout,
-                              allow_redirects=False, stream=True)
+            r = cliente._get(path, headers=headers, stream=True)
+        except SesionInvalida as e:
+            print("  Resultado:            Sesión expirada / cookie no válida")
+            print("  " + str(e).replace("\n", "\n  "))
+            continue
         except requests.exceptions.SSLError:
             sys.exit(MSG_SSL)
         except requests.RequestException as e:
