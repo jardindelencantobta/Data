@@ -44,6 +44,15 @@ try:
 except ImportError:
     sys.exit("Falta la librería 'requests'. Instálela con:  pip install requests")
 
+# Usar los certificados de Windows (incluye la CA interna de la empresa), si
+# la librería truststore está instalada:  python -m pip install truststore
+try:
+    import truststore
+    truststore.inject_into_ssl()
+    USA_TRUSTSTORE = True
+except ImportError:
+    USA_TRUSTSTORE = False
+
 BASE_URL = "https://mesadeservicio.colfondos.com.co"
 ID_INICIAL = 100024721
 API_ACCEPT = "application/vnd.manageengine.sdp.v3+json"
@@ -59,6 +68,13 @@ COOKIE_SESION = (
     "sdpcsrfcookie=ca8bacb48240e7b48b37a627e9551f180a9992ad3cbd400a0504c48047e70c0134762bffa4e1504293dec2fbc58d801c4d061ae6c86f1604113910482b4fec60; "
     "_zcsr_tmp=ca8bacb48240e7b48b37a627e9551f180a9992ad3cbd400a0504c48047e70c0134762bffa4e1504293dec2fbc58d801c4d061ae6c86f1604113910482b4fec60; "
     "PORTALID=301"
+)
+
+
+MSG_SSL = (
+    "Error de certificado SSL (certificado interno de la empresa).\n"
+    "Solución recomendada:  python -m pip install truststore  y vuelva a ejecutar.\n"
+    "Alternativa rápida:    agregue --no-verificar-ssl al comando."
 )
 
 
@@ -238,7 +254,14 @@ def procesar(cliente, tickets, id_inicial, destino_base: Path, modo, flog, estad
         carpeta = destino_base / ticket
         archivos = []
 
-        existe = cliente.ticket_existe(ticket)
+        try:
+            existe = cliente.ticket_existe(ticket)
+        except requests.exceptions.SSLError:
+            raise
+        except requests.RequestException as e:
+            log(f"  ERROR de red consultando ticket {ticket}: {e}", flog)
+            resumen.append((ticket, f"ERROR: {e}", []))
+            continue
         if existe is False:
             log(f"  Ticket {ticket} no existe. Se pasa al siguiente.", flog)
             resumen.append((ticket, "NO EXISTE", []))
@@ -265,6 +288,9 @@ def procesar(cliente, tickets, id_inicial, destino_base: Path, modo, flog, estad
                     id_actual -= 1
                     estado_global["id_actual"] = id_actual
         except SesionInvalida:
+            resumen.append((ticket, "INTERRUMPIDO", archivos))
+            raise
+        except requests.exceptions.SSLError:
             resumen.append((ticket, "INTERRUMPIDO", archivos))
             raise
         except requests.RequestException as e:
@@ -361,6 +387,10 @@ def main():
                   f"{'existe' if r else 'no existe' if r is False else 'respuesta no concluyente'}")
         except SesionInvalida as e:
             sys.exit(f"Credencial inválida: {e}")
+        except requests.exceptions.SSLError:
+            sys.exit(MSG_SSL)
+        except requests.RequestException as e:
+            sys.exit(f"No se pudo conectar con el servidor: {e}")
         return
 
     marca = datetime.now().strftime("%Y%m%d_%H%M%S")
@@ -379,6 +409,9 @@ def main():
             log("Renueve la cookie/token y vuelva a ejecutar con --id-inicial y la lista "
                 "de tickets pendientes.", flog)
             codigo = 2
+        except requests.exceptions.SSLError:
+            log(MSG_SSL, flog)
+            codigo = 3
         except KeyboardInterrupt:
             log("Proceso cancelado por el usuario.", flog)
             codigo = 130
