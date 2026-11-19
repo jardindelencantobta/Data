@@ -9,3 +9,5 @@ python descargar_adjuntos.py --solo-probar
 python "Descargar adjuntos.py" --solo-probar
 
 python "Descargar adjuntos.py"
+
+python -m pip install truststore
