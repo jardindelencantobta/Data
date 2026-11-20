@@ -1,15 +1,40 @@
-PS C:\Python> python "Descargar adjuntos.py"
-Tickets a procesar: 270  |  Destino: C:\Users\JR87553\OneDrive - Colfondos S.A\Documentos\AdjuntosMesaServicio
-[2026-11-20 10:43:12] (1/270) Ticket 100002985
-[2026-11-20 10:43:14]   Adjuntos según la mesa de servicio: 6
-[2026-11-20 10:43:15] PROCESO DETENIDO: El servidor devolvió una página web (posible pantalla de inicio de sesión) en vez de datos.
-La sesión expiró o la cookie ya no es válida.
-  -> Recargue la mesa de servicio en el navegador (F5) e inicie sesión.
-  -> Copie la nueva cabecera Cookie (Network > petición de descarga > Request Headers > Copy value)
-  -> Péguela en COOKIE_SESION dentro del script y vuelva a ejecutar.
-[2026-11-20 10:43:15] Para continuar donde quedó, ejecute con:  --id-inicial 100024721 y deje en Tickets.txt solo los tickets pendientes (vea el reporte).
 
-Listo. Archivos descargados: 0
-Reporte: C:\Users\JR87553\OneDrive - Colfondos S.A\Documentos\AdjuntosMesaServicio\reporte_descargas_20261120_104312.txt
-Log:     C:\Users\JR87553\OneDrive - Colfondos S.A\Documentos\AdjuntosMesaServicio\log_20261120_104312.txt
+Tickets a procesar: 272  |  Destino: C:\Users\JR87553\OneDrive - Colfondos S.A\Documentos\AdjuntosMesaServicio
+[2026-11-20 10:51:23] (1/272) Ticket 100002992
+[2026-11-20 10:51:26]   Adjuntos según la mesa de servicio: 3
+[2026-11-20 10:51:29]   ERROR adjunto 100024061 (Pago Claude 26-10-2026.png): El servidor devolvió una página web en lugar del archivo (copia en _diagnostico\respuesta_100002992_100024061.html).
+[2026-11-20 10:51:33]   ERROR adjunto 100024062 (RV_ Licencia Claude.msg): El servidor devolvió una página web en lugar del archivo (copia en _diagnostico\respuesta_100002992_100024062.html).
+[2026-11-20 10:51:36]   ERROR adjunto 100024063 (Licencia hoy 27-10-2026.png): El servidor devolvió una página web en lugar del archivo (copia en _diagnostico\respuesta_100002992_100024063.html).
+[2026-11-20 10:51:36] (2/272) Ticket 100002986
+[2026-11-20 10:51:38]   Adjuntos según la mesa de servicio: 1
+[2026-11-20 10:51:42]   ERROR adjunto 100024037 (Propuesta de Renovación de Consumo GCP.pdf): El servidor devolvió una página web en lugar del archivo (copia en _diagnostico\respuesta_100002986_100024037.html).
+[2026-11-20 10:51:42] (3/272) Ticket 100002985
+[2026-11-20 10:51:44]   Adjuntos según la mesa de servicio: 6
+[2026-11-20 10:51:47]   ERROR adjunto 100024031 (Blackwire-3220-Ficha-Tecnica (1).pdf): El servidor devolvió una página web en lugar del archivo (copia en _diagnostico\respuesta_100002985_100024031.html).
+[2026-11-20 10:51:51]   ERROR adjunto 100024032 (JC-0057 - 17 Diademas Con cancelacion De Ruido.pdf): El servidor devolvió una página web en lugar del archivo (copia en _diagnostico\respuesta_100002985_100024032.html).
+[2026-11-20 10:51:54]   ERROR adjunto 100024033 (6794122_h570e-datasheet-teams-version-1-.pdf): El servidor devolvió una página web en lugar del archivo (copia en _diagnostico\respuesta_100002985_100024033.html).
+[2026-11-20 10:51:58]   ERROR adjunto 100024034 (6779558_6779558.pdf): El servidor devolvió una página web en lugar del archivo (copia en _diagnostico\respuesta_100002985_100024034.html).
+[2026-11-20 10:52:01]   ERROR adjunto 100024035 (COTIZACION-1-1735 COLFONDOS.pdf): El servidor devolvió una página web en lugar del archivo (copia en _diagnostico\respuesta_100002985_100024035.html).
+[2026-11-20 10:52:05]   ERROR adjunto 100024036 (Hoja de datos _VT NEXUS 36.pdf): El servidor devolvió una página web en lugar del archivo (copia en _diagnostico\respuesta_100002985_100024036.html).
+[2026-11-20 10:52:05] (4/272) Ticket 100002983
+
+
+
+
+[2026-11-20 11:00:17]   OK  adjunto 100020214 -> COLFONDOS_PR-2026-368_30MAR2026-v1.0.pdf
+Traceback (most recent call last):
+  File "C:\Python\Descargar adjuntos.py", line 789, in <module>
+    main()
+    ~~~~^^
+  File "C:\Python\Descargar adjuntos.py", line 760, in main
+    procesar(cliente, tickets, args.id_inicial, destino_base, args.modo,
+    ~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+             flog, estado_global)
+             ^^^^^^^^^^^^^^^^^^^^
+  File "C:\Python\Descargar adjuntos.py", line 520, in procesar
+    nombre = cliente.descargar(ticket, adj, carpeta, url_api)
+  File "C:\Python\Descargar adjuntos.py", line 453, in descargar
+    with open(temporal, "wb") as f:
+         ~~~~^^^^^^^^^^^^^^^^
+FileNotFoundError: [Errno 2] No such file or directory: 'C:\\Users\\JR87553\\OneDrive - Colfondos S.A\\Documentos\\AdjuntosMesaServicio\\100002451\\Propuesta Reporte Validaciones - Consolidación de negociación - Presupuesto de transformación centro de costo 7900128 proyecto Rediseño y Automatización Proceso Cumplimiento de Inversiones.msg.part'
 PS C:\Python>
