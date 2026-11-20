@@ -15,6 +15,12 @@ python -m pip install truststore
 python "Descargar adjuntos.py" --solo-probar --no-verificar-ssl
 
 
+python "Descargar adjuntos.py" --solo-listar
+
+
+python "Descargar adjuntos.py"
+
+
 python "Descargar adjuntos.py" --solo-probar --id-inicial 100024720
 
 
