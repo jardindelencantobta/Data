@@ -57,8 +57,9 @@ BASE_URL = "https://mesadeservicio.colfondos.com.co"
 ID_INICIAL = 100024721
 API_ACCEPT = "application/vnd.manageengine.sdp.v3+json"
 
-# Cookie de sesión del navegador. Cuando la sesión expire, reemplace este valor
-# por el nuevo (Network -> petición de descarga -> Request Headers -> Cookie).
+# Cookie de sesión del navegador. Lo más fácil es pegarla en un archivo
+# cookie.txt junto a este script (tiene prioridad sobre este valor).
+# (Network -> petición de descarga -> Request Headers -> Cookie -> Copy value)
 COOKIE_SESION = (
     "SDPSESSIONID=95EBB19BD62B76F7EFE7352A7FE2A6DE; "
     "JSESSIONIDSDP=1CDB01DB2DFC3B0E659A90D42B3C510B; "
@@ -163,7 +164,7 @@ MSG_SESION = ("La sesión expiró o la cookie ya no es válida.\n"
               "  -> Recargue la mesa de servicio en el navegador (F5) e inicie sesión.\n"
               "  -> Copie la nueva cabecera Cookie (Network > petición de descarga > "
               "Request Headers > Copy value)\n"
-              "  -> Péguela en COOKIE_SESION dentro del script y vuelva a ejecutar.")
+              "  -> Péguela en cookie.txt (junto al script) y vuelva a ejecutar.")
 
 TIPOS = {
     "ok": "Respuesta correcta",
@@ -265,6 +266,9 @@ class Cliente:
                                         "Chrome/130.0 Safari/537.36")
         self.extra = {}          # cabeceras adicionales (CSRF) para sesión web
         self.usar_extra = True
+        self._json_ok_cache = False
+        self.ultimo_json_path = None  # última consulta JSON correcta (para verificar la sesión)
+        self.carpeta_diag = None      # dónde guardar respuestas raras para revisarlas
         if authtoken:
             self.s.headers["authtoken"] = authtoken
         if cookie:
@@ -294,7 +298,7 @@ class Cliente:
             resp.content  # leer el cuerpo del error para poder interpretarlo
         return interpretar(resp)
 
-    def _get(self, path, headers=None, **kw):
+    def _get(self, path, headers=None, permitir_html=False, **kw):
         resp = self._pedir(path, headers, con_extra=self.usar_extra and bool(self.extra), **kw)
         tipo, mensaje = self._tipo(resp)
         if tipo == "sesion" and self.usar_extra and self.extra:
@@ -309,15 +313,60 @@ class Cliente:
                 return resp2
             resp, mensaje = resp2, mensaje2
         if tipo == "sesion":
+            es_html_200 = resp.status_code == 200
+            if es_html_200 and self.sesion_activa() and permitir_html:
+                return resp  # la sesión sirve; el problema es solo este archivo
+            extra_info = self._evidencia(resp, path)
             resp.close()
-            raise SesionInvalida(mensaje)
+            raise SesionInvalida(mensaje + extra_info)
         return resp
+
+    def _evidencia(self, resp, path):
+        """Guarda la página recibida y devuelve un texto con su título y ubicación."""
+        try:
+            cuerpo = resp.content or b""
+        except Exception:
+            cuerpo = b""
+        info = f"\n  Petición: {path}  (HTTP {resp.status_code}, {resp.headers.get('Content-Type', '-')})"
+        m = re.search(rb"<title[^>]*>(.*?)</title>", cuerpo, re.I | re.S)
+        if m:
+            titulo = m.group(1).decode("utf-8", "replace").strip()
+            info += f"\n  Título de la página recibida: {titulo[:120]}"
+        if self.carpeta_diag and cuerpo:
+            try:
+                self.carpeta_diag.mkdir(parents=True, exist_ok=True)
+                ruta = self.carpeta_diag / "pagina_recibida.html"
+                ruta.write_bytes(cuerpo[:300000])
+                info += f"\n  Copia de la página: {ruta}"
+            except Exception:
+                pass
+        if self.ultimo_json_path:
+            info += ("\n  Nota: la consulta de datos (JSON) "
+                     + ("SÍ" if self._json_ok_cache else "NO")
+                     + " respondía bien justo después.")
+        return info
+
+    def sesion_activa(self):
+        """Comprueba con una llamada JSON si la sesión sigue siendo válida."""
+        if not self.ultimo_json_path:
+            return False
+        try:
+            r = self._pedir(self.ultimo_json_path, {"Accept": API_ACCEPT},
+                            con_extra=self.usar_extra and bool(self.extra))
+            ok = (r.status_code == 200
+                  and "html" not in r.headers.get("Content-Type", "").lower())
+            r.close()
+            self._json_ok_cache = ok
+            return ok
+        except requests.RequestException:
+            return False
 
     def ticket_existe(self, ticket):
         """Devuelve (estado, mensaje). estado: True existe, False no existe, None dudoso."""
         r = self._get(f"/api/v3/requests/{ticket}", headers={"Accept": API_ACCEPT})
         tipo, mensaje = interpretar(r)
         if tipo == "ok":
+            self.ultimo_json_path = f"/api/v3/requests/{ticket}"
             return True, tipo, mensaje
         if tipo == "no_existe":
             return False, tipo, mensaje
@@ -325,10 +374,12 @@ class Cliente:
 
     @staticmethod
     def _ids_de(lista):
+        """Devuelve [(id, nombre, url_descarga)]."""
         ids = []
         for a in lista or []:
             if isinstance(a, dict) and a.get("id"):
-                ids.append((str(a["id"]), a.get("name") or a.get("file_name") or ""))
+                url = a.get("content_url") or a.get("download_url") or ""
+                ids.append((str(a["id"]), a.get("name") or a.get("file_name") or "", url))
         return ids
 
     def listar_adjuntos(self, ticket):
@@ -340,6 +391,7 @@ class Cliente:
             return []
         if tipo != "ok":
             raise RuntimeError(mensaje)
+        self.ultimo_json_path = f"/api/v3/requests/{ticket}"
         try:
             req = r.json().get("request", {})
         except ValueError:
@@ -355,28 +407,71 @@ class Cliente:
             raise RuntimeError(mensaje)
         return self._ids_de(r.json().get("attachments", []))
 
-    def descargar(self, ticket, adjunto, carpeta: Path):
+    def _ruta_relativa(self, url):
+        if not url:
+            return None
+        if url.startswith("http"):
+            m = re.match(r"https?://[^/]+(/.*)$", url)
+            return m.group(1) if m else None
+        return url if url.startswith("/") else "/" + url
+
+    def descargar(self, ticket, adjunto, carpeta: Path, url_api=None):
         """Devuelve el nombre del archivo guardado, o None si responde 404."""
-        r = self._get(f"/api/v3/requests/{ticket}/attachments/{adjunto}/_download",
-                      stream=True)
+        candidatas = []
+        rel = self._ruta_relativa(url_api)
+        if rel:
+            candidatas.append(rel)
+        estandar = f"/api/v3/requests/{ticket}/attachments/{adjunto}/_download"
+        if estandar not in candidatas:
+            candidatas.append(estandar)
+
+        ultimo_error = None
+        todos_404 = True
+        for path in candidatas:
+            r = self._get(path, stream=True, permitir_html=True)
+            try:
+                ctype = r.headers.get("Content-Type", "").lower()
+                if r.status_code == 200 and "text/html" in ctype \
+                        and "Content-Disposition" not in r.headers:
+                    archivo = self._guardar_diagnostico(ticket, adjunto, r)
+                    todos_404 = False
+                    ultimo_error = ("El servidor devolvió una página web en lugar del archivo"
+                                    + (f" (copia en _diagnostico\\{archivo})" if archivo else "") + ".")
+                    continue
+                tipo, mensaje = interpretar(r)
+                if tipo == "no_existe":
+                    todos_404 = todos_404 and True
+                    continue
+                if tipo != "ok":
+                    todos_404 = False
+                    ultimo_error = mensaje
+                    continue
+                carpeta.mkdir(parents=True, exist_ok=True)
+                nombre = nombre_desde_cabecera(r, f"adjunto_{adjunto}")
+                destino = ruta_sin_colision(carpeta, nombre)
+                temporal = destino.with_name(destino.name + ".part")
+                with open(temporal, "wb") as f:
+                    for bloque in r.iter_content(chunk_size=1024 * 256):
+                        if bloque:
+                            f.write(bloque)
+                temporal.replace(destino)
+                return destino.name
+            finally:
+                r.close()
+        if todos_404:
+            return None
+        raise RuntimeError(ultimo_error or "No se pudo descargar el adjunto.")
+
+    def _guardar_diagnostico(self, ticket, adjunto, resp):
+        if not self.carpeta_diag:
+            return None
         try:
-            tipo, mensaje = interpretar(r)
-            if tipo == "no_existe":
-                return None
-            if tipo != "ok":
-                raise RuntimeError(mensaje)
-            carpeta.mkdir(parents=True, exist_ok=True)
-            nombre = nombre_desde_cabecera(r, f"adjunto_{adjunto}")
-            destino = ruta_sin_colision(carpeta, nombre)
-            temporal = destino.with_name(destino.name + ".part")
-            with open(temporal, "wb") as f:
-                for bloque in r.iter_content(chunk_size=1024 * 256):
-                    if bloque:
-                        f.write(bloque)
-            temporal.replace(destino)
-            return destino.name
-        finally:
-            r.close()
+            self.carpeta_diag.mkdir(parents=True, exist_ok=True)
+            ruta = self.carpeta_diag / f"respuesta_{ticket}_{adjunto}.html"
+            ruta.write_bytes(resp.content[:200000])
+            return ruta.name
+        except Exception:
+            return None
 
 
 # ----------------------------------------------------------------------------
@@ -390,6 +485,7 @@ def procesar(cliente, tickets, id_inicial, destino_base: Path, modo, flog, estad
         log(f"({i}/{len(tickets)}) Ticket {ticket}", flog)
         carpeta = destino_base / ticket
         archivos = []
+        errores_adj = []
 
         try:
             existe, tipo_ticket, msg_ticket = cliente.ticket_existe(ticket)
@@ -415,12 +511,17 @@ def procesar(cliente, tickets, id_inicial, destino_base: Path, modo, flog, estad
             if modo == "listado":
                 ids = cliente.listar_adjuntos(ticket)
                 log(f"  Adjuntos según la mesa de servicio: {len(ids)}", flog)
-                for adj, nombre_api in ids:
+                for adj, nombre_api, url_api in ids:
                     if nombre_api and (carpeta / nombre_seguro(nombre_api)).exists():
                         archivos.append(nombre_seguro(nombre_api))
                         log(f"  Ya existe, se omite: {nombre_api}", flog)
                         continue
-                    nombre = cliente.descargar(ticket, adj, carpeta)
+                    try:
+                        nombre = cliente.descargar(ticket, adj, carpeta, url_api)
+                    except RuntimeError as e:
+                        errores_adj.append(adj)
+                        log(f"  ERROR adjunto {adj} ({nombre_api}): {e}", flog)
+                        continue
                     if nombre:
                         archivos.append(nombre)
                         log(f"  OK  adjunto {adj} -> {nombre}", flog)
@@ -452,8 +553,12 @@ def procesar(cliente, tickets, id_inicial, destino_base: Path, modo, flog, estad
             resumen.append((ticket, f"ERROR: {primera}", archivos))
             continue
 
-        estado = "CON ADJUNTOS" if archivos else "SIN ADJUNTOS"
-        if not archivos:
+        if errores_adj:
+            estado = (f"INCOMPLETO: {len(errores_adj)} adjunto(s) con error "
+                      f"({', '.join(errores_adj)})")
+        else:
+            estado = "CON ADJUNTOS" if archivos else "SIN ADJUNTOS"
+        if not archivos and not errores_adj:
             log("  El ticket no tiene adjuntos.", flog)
         resumen.append((ticket, estado, archivos))
 
@@ -526,8 +631,10 @@ def diagnostico(cliente, ticket, adjunto):
     try:
         ids = cliente.listar_adjuntos(ticket)
         print(f"  Cantidad: {len(ids)}")
-        for adj, nombre in ids:
+        for adj, nombre, url in ids:
             print(f"   - {adj}  {nombre}")
+            if url:
+                print(f"       url: {url}")
     except SesionInvalida as e:
         print("  " + str(e).replace("\n", "\n  "))
     except Exception as e:
@@ -541,7 +648,7 @@ def solo_listar(cliente, tickets, destino_base: Path):
     ruta = destino_base / f"listado_adjuntos_{marca}.csv"
     total = 0
     with open(ruta, "w", encoding="utf-8-sig") as f:
-        f.write("ticket;estado;cantidad;id_adjunto;nombre_archivo\n")
+        f.write("ticket;estado;cantidad;id_adjunto;nombre_archivo;url_descarga\n")
         for i, ticket in enumerate(tickets, 1):
             try:
                 existe, tipo, msg = cliente.ticket_existe(ticket)
@@ -559,12 +666,12 @@ def solo_listar(cliente, tickets, destino_base: Path):
                 estado, ids = f"ERROR: {str(e).splitlines()[0]}", []
             total += len(ids)
             print(f"({i}/{len(tickets)}) {ticket}: {estado} - {len(ids)} adjunto(s)"
-                  + (f"  [{', '.join(a for a, _ in ids)}]" if ids else ""))
+                  + (f"  [{', '.join(a for a, _, _ in ids)}]" if ids else ""))
             if ids:
-                for adj, nombre in ids:
-                    f.write(f"{ticket};{estado};{len(ids)};{adj};{nombre}\n")
+                for adj, nombre, url in ids:
+                    f.write(f"{ticket};{estado};{len(ids)};{adj};{nombre};{url}\n")
             else:
-                f.write(f"{ticket};{estado};0;;\n")
+                f.write(f"{ticket};{estado};0;;;\n")
             f.flush()
     print(f"\nTotal de adjuntos encontrados: {total}")
     print(f"Listado guardado en: {ruta}  (se abre en Excel)")
@@ -586,12 +693,19 @@ def main():
     p.add_argument("--cookie", default=os.environ.get("SDP_COOKIE") or COOKIE_SESION or None)
     p.add_argument("--no-verificar-ssl", action="store_true",
                    help="No validar el certificado (solo si el servidor usa uno interno)")
-    p.add_argument("--pausa", type=float, default=0.2, help="Segundos entre peticiones")
+    p.add_argument("--pausa", type=float, default=1.0, help="Segundos entre peticiones (por defecto 1)")
     p.add_argument("--solo-listar", action="store_true",
                    help="Solo consulta y lista los adjuntos de cada ticket, sin descargar")
     p.add_argument("--solo-probar", action="store_true",
                    help="Solo valida la credencial con el primer ticket y termina")
     args = p.parse_args()
+
+    ruta_cookie = Path(__file__).with_name("cookie.txt")
+    if not args.authtoken and ruta_cookie.exists() and not os.environ.get("SDP_COOKIE"):
+        texto_cookie = ruta_cookie.read_text(encoding="utf-8-sig").strip()
+        if texto_cookie:
+            args.cookie = texto_cookie
+            print(f"Usando la cookie de {ruta_cookie.name}")
 
     if not args.authtoken and not args.cookie:
         print("No se encontró credencial (SDP_AUTHTOKEN o SDP_COOKIE).")
@@ -619,6 +733,7 @@ def main():
 
     cliente = Cliente(args.base_url, args.authtoken, args.cookie,
                       verificar_ssl=not args.no_verificar_ssl, pausa=args.pausa)
+    cliente.carpeta_diag = destino_base / "_diagnostico"
 
     if args.solo_probar:
         diagnostico(cliente, tickets[0], args.id_inicial)
@@ -646,8 +761,12 @@ def main():
                      flog, estado_global)
         except SesionInvalida as e:
             log(f"PROCESO DETENIDO: {e}", flog)
-            log(f"Para continuar donde quedó, ejecute con:  --id-inicial {estado_global['id_actual']}"
-                " y deje en Tickets.txt solo los tickets pendientes (vea el reporte).", flog)
+            if args.modo == "secuencial":
+                log(f"Para continuar donde quedó, ejecute con:  --id-inicial {estado_global['id_actual']}"
+                    " y deje en Tickets.txt solo los tickets pendientes (vea el reporte).", flog)
+            else:
+                log("Para continuar, renueve la cookie y ejecute de nuevo el mismo comando: "
+                    "los archivos ya descargados se omiten.", flog)
             codigo = 2
         except requests.exceptions.SSLError:
             log(MSG_SSL, flog)
