@@ -138,7 +138,25 @@ def nombre_desde_cabecera(resp, respaldo: str) -> str:
     return respaldo
 
 
+MAX_RUTA = 240  # Windows no admite rutas de más de 260 caracteres
+
+
+def nombre_para_carpeta(carpeta: Path, nombre: str) -> str:
+    """Limpia el nombre y lo recorta (conservando la extensión) para que la ruta
+    completa no supere el límite de Windows."""
+    nombre = nombre_seguro(nombre)
+    base, ext = os.path.splitext(nombre)
+    if len(ext) > 15:
+        base, ext = nombre, ""
+    disponible = MAX_RUTA - len(str(carpeta)) - 1 - len(".part") - 4 - len(ext)
+    disponible = max(disponible, 20)
+    if len(base) > disponible:
+        base = base[:disponible].rstrip(" .")
+    return base + ext
+
+
 def ruta_sin_colision(carpeta: Path, nombre: str) -> Path:
+    nombre = nombre_para_carpeta(carpeta, nombre)
     destino = carpeta / nombre
     base, ext = os.path.splitext(nombre)
     n = 1
@@ -512,13 +530,13 @@ def procesar(cliente, tickets, id_inicial, destino_base: Path, modo, flog, estad
                 ids = cliente.listar_adjuntos(ticket)
                 log(f"  Adjuntos según la mesa de servicio: {len(ids)}", flog)
                 for adj, nombre_api, url_api in ids:
-                    if nombre_api and (carpeta / nombre_seguro(nombre_api)).exists():
-                        archivos.append(nombre_seguro(nombre_api))
+                    if nombre_api and (carpeta / nombre_para_carpeta(carpeta, nombre_api)).exists():
+                        archivos.append(nombre_para_carpeta(carpeta, nombre_api))
                         log(f"  Ya existe, se omite: {nombre_api}", flog)
                         continue
                     try:
                         nombre = cliente.descargar(ticket, adj, carpeta, url_api)
-                    except RuntimeError as e:
+                    except (RuntimeError, OSError) as e:
                         errores_adj.append(adj)
                         log(f"  ERROR adjunto {adj} ({nombre_api}): {e}", flog)
                         continue
@@ -694,6 +712,8 @@ def main():
     p.add_argument("--no-verificar-ssl", action="store_true",
                    help="No validar el certificado (solo si el servidor usa uno interno)")
     p.add_argument("--pausa", type=float, default=1.0, help="Segundos entre peticiones (por defecto 1)")
+    p.add_argument("--desde", default=None,
+                   help="Número de ticket desde el cual empezar (omite los anteriores de la lista)")
     p.add_argument("--solo-listar", action="store_true",
                    help="Solo consulta y lista los adjuntos de cada ticket, sin descargar")
     p.add_argument("--solo-probar", action="store_true",
@@ -727,6 +747,11 @@ def main():
     tickets = leer_tickets(ruta_tickets)
     if not tickets:
         sys.exit("El archivo de tickets no contiene números.")
+    if args.desde:
+        if args.desde not in tickets:
+            sys.exit(f"El ticket {args.desde} no está en {ruta_tickets.name}.")
+        tickets = tickets[tickets.index(args.desde):]
+        print(f"Empezando desde el ticket {args.desde}")
 
     destino_base = Path(args.destino) if args.destino else carpeta_documentos() / "AdjuntosMesaServicio"
     destino_base.mkdir(parents=True, exist_ok=True)
