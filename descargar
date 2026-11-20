@@ -60,13 +60,10 @@ API_ACCEPT = "application/vnd.manageengine.sdp.v3+json"
 # Cookie de sesión del navegador. Cuando la sesión expire, reemplace este valor
 # por el nuevo (Network -> petición de descarga -> Request Headers -> Cookie).
 COOKIE_SESION = (
-    "SDPSESSIONID=0F6E276ABAF3771235E7CDFCBB1DD556; "
-    "JSESSIONIDSDP=04A5A692B7E2E87055C7A28DDE80B78F; "
-    "_rem=true; "
-    "febbc30d=becbc901598f4105999453323037058b; "
-    "mesdp01dce551e7=4f32f1beb288350627db51ba8ab45d5b4977a37e8f3131ecde0ac0ccbecaa515; "
-    "sdpcsrfcookie=ac9542dc9f34d6db5f96d5db18f5a15e83f03bcbe86cf6f002459adc123e0ee2d2a61a9feb77423bcc9bac6f8bf8bade249f856a80a94000737d01c0ffcfdd3e; "
-    "_zcsr_tmp=ac9542dc9f34d6db5f96d5db18f5a15e83f03bcbe86cf6f002459adc123e0ee2d2a61a9feb77423bcc9bac6f8bf8bade249f856a80a94000737d01c0ffcfdd3e; "
+    "SDPSESSIONID=95EBB19BD62B76F7EFE7352A7FE2A6DE; "
+    "JSESSIONIDSDP=1CDB01DB2DFC3B0E659A90D42B3C510B; "
+    "sdpcsrfcookie=849bd3babfafba618b49f8c48059e2c4efe0d297bc9040f6bb5e1364e38e49650a3545ed1d4c0feb536c8df4a38eacfc74fa6132ec6f14ab30a829deea60a1c5; "
+    "_zcsr_tmp=849bd3babfafba618b49f8c48059e2c4efe0d297bc9040f6bb5e1364e38e49650a3545ed1d4c0feb536c8df4a38eacfc74fa6132ec6f14ab30a829deea60a1c5; "
     "PORTALID=301"
 )
 
