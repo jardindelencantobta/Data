@@ -2,7 +2,10 @@
 """
 Descarga los adjuntos de tickets de la Mesa de Servicio (ServiceDesk Plus, API v3).
 
-Lógica (modo "secuencial", por defecto):
+Modo "listado" (por defecto): consulta a la API la lista real de adjuntos de
+cada ticket y los descarga.
+
+Lógica del modo "secuencial" (opcional, --modo secuencial):
   - Se recorre la lista de tickets en orden.
   - El id de adjunto arranca en ID_INICIAL y baja de 1 en 1.
   - Mientras la descarga responda 200, se guarda el archivo y se prueba id - 1
@@ -10,9 +13,6 @@ Lógica (modo "secuencial", por defecto):
   - Cuando responde 404, se pasa al SIGUIENTE ticket conservando el mismo id.
   - Si el ticket no existe, se registra y se pasa al siguiente.
 
-Modo "listado" (opcional, --modo listado): consulta a la API la lista real de
-adjuntos de cada ticket y los descarga, sin depender de que los ids sean
-consecutivos.
 
 Autenticación (elija una):
   - API key de técnico:  variable SDP_AUTHTOKEN  o  --authtoken
@@ -326,15 +326,37 @@ class Cliente:
             return False, tipo, mensaje
         return None, tipo, mensaje
 
+    @staticmethod
+    def _ids_de(lista):
+        ids = []
+        for a in lista or []:
+            if isinstance(a, dict) and a.get("id"):
+                ids.append((str(a["id"]), a.get("name") or a.get("file_name") or ""))
+        return ids
+
     def listar_adjuntos(self, ticket):
-        r = self._get(f"/api/v3/requests/{ticket}/attachments",
-                      headers={"Accept": API_ACCEPT})
+        """Devuelve [(id, nombre)] con los adjuntos reales del ticket.
+        Intenta 1) el detalle del ticket y 2) el endpoint /attachments."""
+        r = self._get(f"/api/v3/requests/{ticket}", headers={"Accept": API_ACCEPT})
         tipo, mensaje = interpretar(r)
         if tipo == "no_existe":
             return []
         if tipo != "ok":
             raise RuntimeError(mensaje)
-        return [str(a["id"]) for a in r.json().get("attachments", [])]
+        try:
+            req = r.json().get("request", {})
+        except ValueError:
+            req = {}
+        if isinstance(req, dict) and "attachments" in req:
+            return self._ids_de(req.get("attachments"))
+
+        r = self._get(f"/api/v3/requests/{ticket}/attachments", headers={"Accept": API_ACCEPT})
+        tipo, mensaje = interpretar(r)
+        if tipo == "no_existe":
+            return []
+        if tipo != "ok":
+            raise RuntimeError(mensaje)
+        return self._ids_de(r.json().get("attachments", []))
 
     def descargar(self, ticket, adjunto, carpeta: Path):
         """Devuelve el nombre del archivo guardado, o None si responde 404."""
@@ -395,7 +417,12 @@ def procesar(cliente, tickets, id_inicial, destino_base: Path, modo, flog, estad
         try:
             if modo == "listado":
                 ids = cliente.listar_adjuntos(ticket)
-                for adj in ids:
+                log(f"  Adjuntos según la mesa de servicio: {len(ids)}", flog)
+                for adj, nombre_api in ids:
+                    if nombre_api and (carpeta / nombre_seguro(nombre_api)).exists():
+                        archivos.append(nombre_seguro(nombre_api))
+                        log(f"  Ya existe, se omite: {nombre_api}", flog)
+                        continue
                     nombre = cliente.descargar(ticket, adj, carpeta)
                     if nombre:
                         archivos.append(nombre)
@@ -497,7 +524,53 @@ def diagnostico(cliente, ticket, adjunto):
             print("  Inicio de la respuesta:")
             print("   " + r.text.replace("\n", " ")[:400])
         r.close()
+    print("\n" + "=" * 60)
+    print(f"Listado de adjuntos del ticket {ticket}:")
+    try:
+        ids = cliente.listar_adjuntos(ticket)
+        print(f"  Cantidad: {len(ids)}")
+        for adj, nombre in ids:
+            print(f"   - {adj}  {nombre}")
+    except SesionInvalida as e:
+        print("  " + str(e).replace("\n", "\n  "))
+    except Exception as e:
+        print(f"  No se pudo obtener el listado: {str(e).splitlines()[0]}")
     print("\nSi la descarga dice 'Respuesta correcta', ya puede ejecutar el proceso completo.")
+
+
+def solo_listar(cliente, tickets, destino_base: Path):
+    """Consulta los adjuntos de cada ticket y genera un listado, sin descargar."""
+    marca = datetime.now().strftime("%Y%m%d_%H%M%S")
+    ruta = destino_base / f"listado_adjuntos_{marca}.csv"
+    total = 0
+    with open(ruta, "w", encoding="utf-8-sig") as f:
+        f.write("ticket;estado;cantidad;id_adjunto;nombre_archivo\n")
+        for i, ticket in enumerate(tickets, 1):
+            try:
+                existe, tipo, msg = cliente.ticket_existe(ticket)
+                if existe is False:
+                    estado, ids = "NO EXISTE", []
+                elif tipo == "permiso":
+                    estado, ids = "SIN PERMISO", []
+                else:
+                    ids = cliente.listar_adjuntos(ticket)
+                    estado = "CON ADJUNTOS" if ids else "SIN ADJUNTOS"
+            except SesionInvalida:
+                print(f"\nSesión expirada en el ticket {ticket}. Listado parcial en: {ruta}")
+                raise
+            except Exception as e:
+                estado, ids = f"ERROR: {str(e).splitlines()[0]}", []
+            total += len(ids)
+            print(f"({i}/{len(tickets)}) {ticket}: {estado} - {len(ids)} adjunto(s)"
+                  + (f"  [{', '.join(a for a, _ in ids)}]" if ids else ""))
+            if ids:
+                for adj, nombre in ids:
+                    f.write(f"{ticket};{estado};{len(ids)};{adj};{nombre}\n")
+            else:
+                f.write(f"{ticket};{estado};0;;\n")
+            f.flush()
+    print(f"\nTotal de adjuntos encontrados: {total}")
+    print(f"Listado guardado en: {ruta}  (se abre en Excel)")
 
 
 def main():
@@ -508,13 +581,17 @@ def main():
                    help=f"Id del primer adjunto (por defecto {ID_INICIAL})")
     p.add_argument("--destino", default=None,
                    help="Carpeta base de descarga (por defecto Mis documentos/AdjuntosMesaServicio)")
-    p.add_argument("--modo", choices=("secuencial", "listado"), default="secuencial")
+    p.add_argument("--modo", choices=("listado", "secuencial"), default="listado",
+                   help="listado (recomendado): pide a la API los adjuntos de cada ticket. "
+                        "secuencial: prueba ids consecutivos desde --id-inicial")
     p.add_argument("--base-url", default=BASE_URL)
     p.add_argument("--authtoken", default=os.environ.get("SDP_AUTHTOKEN"))
     p.add_argument("--cookie", default=os.environ.get("SDP_COOKIE") or COOKIE_SESION or None)
     p.add_argument("--no-verificar-ssl", action="store_true",
                    help="No validar el certificado (solo si el servidor usa uno interno)")
     p.add_argument("--pausa", type=float, default=0.2, help="Segundos entre peticiones")
+    p.add_argument("--solo-listar", action="store_true",
+                   help="Solo consulta y lista los adjuntos de cada ticket, sin descargar")
     p.add_argument("--solo-probar", action="store_true",
                    help="Solo valida la credencial con el primer ticket y termina")
     args = p.parse_args()
@@ -548,6 +625,15 @@ def main():
 
     if args.solo_probar:
         diagnostico(cliente, tickets[0], args.id_inicial)
+        return
+
+    if args.solo_listar:
+        try:
+            solo_listar(cliente, tickets, destino_base)
+        except SesionInvalida as e:
+            sys.exit(str(e))
+        except requests.exceptions.SSLError:
+            sys.exit(MSG_SSL)
         return
 
     marca = datetime.now().strftime("%Y%m%d_%H%M%S")
