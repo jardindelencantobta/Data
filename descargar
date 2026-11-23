@@ -660,10 +660,13 @@ def diagnostico(cliente, ticket, adjunto):
     print("\nSi la descarga dice 'Respuesta correcta', ya puede ejecutar el proceso completo.")
 
 
+CARPETA_SCRIPT = Path(__file__).resolve().parent
+RUTA_LISTADO = CARPETA_SCRIPT / "listado_adjuntos.csv"
+
+
 def solo_listar(cliente, tickets, destino_base: Path):
-    """Consulta los adjuntos de cada ticket y genera un listado, sin descargar."""
-    marca = datetime.now().strftime("%Y%m%d_%H%M%S")
-    ruta = destino_base / f"listado_adjuntos_{marca}.csv"
+    """Consulta los adjuntos de cada ticket y genera listado_adjuntos.csv junto al script."""
+    ruta = RUTA_LISTADO
     total = 0
     with open(ruta, "w", encoding="utf-8-sig") as f:
         f.write("ticket;estado;cantidad;id_adjunto;nombre_archivo;url_descarga\n")
@@ -695,6 +698,88 @@ def solo_listar(cliente, tickets, destino_base: Path):
     print(f"Listado guardado en: {ruta}  (se abre en Excel)")
 
 
+def leer_listado(ruta: Path):
+    """Lee el CSV de --solo-listar. Devuelve {ticket: (estado, [(id, nombre, url)])} en orden."""
+    datos = {}
+    with open(ruta, encoding="utf-8-sig") as f:
+        next(f, None)  # encabezado
+        for linea in f:
+            linea = linea.rstrip("\r\n")
+            if not linea.strip():
+                continue
+            partes = linea.split(";")
+            if len(partes) < 4:
+                continue
+            ticket, estado, _cant, adj = partes[:4]
+            if len(partes) >= 6:
+                url = partes[-1]
+                nombre = ";".join(partes[4:-1])
+            else:
+                url, nombre = "", ";".join(partes[4:])
+            estado_t, ids = datos.setdefault(ticket, (estado, []))
+            if adj:
+                ids.append((adj, nombre, url))
+    return datos
+
+
+def procesar_listado_csv(cliente, ruta_csv: Path, destino_base: Path, flog, estado_global):
+    resumen = estado_global["resumen"]
+    datos = leer_listado(ruta_csv)
+    total_adj = sum(len(v[1]) for v in datos.values())
+    log(f"Usando el listado {ruta_csv.name}: {len(datos)} tickets, {total_adj} adjuntos", flog)
+    for i, (ticket, (estado_lst, ids)) in enumerate(datos.items(), 1):
+        log(f"({i}/{len(datos)}) Ticket {ticket}", flog)
+        cliente.ultimo_json_path = f"/api/v3/requests/{ticket}"
+        if not ids:
+            log(f"  {estado_lst} (según el listado). Se omite.", flog)
+            resumen.append((ticket, estado_lst, []))
+            continue
+        carpeta = destino_base / ticket
+        archivos, errores_adj = [], []
+        try:
+            for adj, nombre_api, url_api in ids:
+                if nombre_api and (carpeta / nombre_para_carpeta(carpeta, nombre_api)).exists():
+                    archivos.append(nombre_para_carpeta(carpeta, nombre_api))
+                    log(f"  Ya existe, se omite: {nombre_api}", flog)
+                    continue
+                try:
+                    nombre = cliente.descargar(ticket, adj, carpeta, url_api)
+                except (RuntimeError, OSError) as e:
+                    errores_adj.append(adj)
+                    log(f"  ERROR adjunto {adj} ({nombre_api}): {e}", flog)
+                    continue
+                except requests.exceptions.SSLError:
+                    raise
+                except requests.RequestException as e:
+                    errores_adj.append(adj)
+                    log(f"  ERROR de red en adjunto {adj}: {e}", flog)
+                    continue
+                if nombre:
+                    archivos.append(nombre)
+                    log(f"  OK  adjunto {adj} -> {nombre}", flog)
+                else:
+                    errores_adj.append(adj)
+                    log(f"  404 adjunto {adj} ({nombre_api}): ya no está disponible", flog)
+        except SesionInvalida:
+            resumen.append((ticket, "INTERRUMPIDO", archivos))
+            raise
+        if errores_adj:
+            estado = (f"INCOMPLETO: {len(errores_adj)} adjunto(s) con error "
+                      f"({', '.join(errores_adj)})")
+        else:
+            estado = "CON ADJUNTOS"
+        resumen.append((ticket, estado, archivos))
+
+
+def ultimo_listado(destino_base: Path):
+    """Usa listado_adjuntos.csv junto al script; si no existe, el más reciente del destino."""
+    if RUTA_LISTADO.exists():
+        return RUTA_LISTADO
+    archivos = sorted(destino_base.glob("listado_adjuntos_*.csv"),
+                      key=lambda p: p.stat().st_mtime)
+    return archivos[-1] if archivos else None
+
+
 def main():
     p = argparse.ArgumentParser(description="Descarga adjuntos de tickets de la Mesa de Servicio.")
     p.add_argument("--tickets", default=str(Path(__file__).with_name("tickets.txt")),
@@ -714,6 +799,9 @@ def main():
     p.add_argument("--pausa", type=float, default=1.0, help="Segundos entre peticiones (por defecto 1)")
     p.add_argument("--desde", default=None,
                    help="Número de ticket desde el cual empezar (omite los anteriores de la lista)")
+    p.add_argument("--desde-listado", nargs="?", const="ultimo", default=None,
+                   help="Descarga usando listado_adjuntos.csv (generado con --solo-listar "
+                        "junto al script), sin volver a consultar los tickets.")
     p.add_argument("--solo-listar", action="store_true",
                    help="Solo consulta y lista los adjuntos de cada ticket, sin descargar")
     p.add_argument("--solo-probar", action="store_true",
@@ -773,6 +861,15 @@ def main():
             sys.exit(MSG_SSL)
         return
 
+    ruta_listado = None
+    if args.desde_listado:
+        ruta_listado = (ultimo_listado(destino_base) if args.desde_listado == "ultimo"
+                        else Path(args.desde_listado))
+        if not ruta_listado or not ruta_listado.exists():
+            sys.exit("No se encontró el listado. Ejecute primero con --solo-listar "
+                     "o indique la ruta del CSV.")
+        print(f"Listado: {ruta_listado}")
+
     marca = datetime.now().strftime("%Y%m%d_%H%M%S")
     ruta_log = destino_base / f"log_{marca}.txt"
     ruta_reporte = destino_base / f"reporte_descargas_{marca}.txt"
@@ -782,8 +879,11 @@ def main():
     codigo = 0
     with open(ruta_log, "w", encoding="utf-8") as flog:
         try:
-            procesar(cliente, tickets, args.id_inicial, destino_base, args.modo,
-                     flog, estado_global)
+            if ruta_listado:
+                procesar_listado_csv(cliente, ruta_listado, destino_base, flog, estado_global)
+            else:
+                procesar(cliente, tickets, args.id_inicial, destino_base, args.modo,
+                         flog, estado_global)
         except SesionInvalida as e:
             log(f"PROCESO DETENIDO: {e}", flog)
             if args.modo == "secuencial":
