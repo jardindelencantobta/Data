@@ -1,0 +1,23 @@
+DECLARE @valor BIGINT = 100003054;   -- número de ticket conocido
+
+IF OBJECT_ID('tempdb..#hallazgos') IS NOT NULL DROP TABLE #hallazgos;
+CREATE TABLE #hallazgos (esquema SYSNAME, tabla SYSNAME, columna SYSNAME, coincidencias BIGINT);
+
+DECLARE @sql NVARCHAR(MAX) = N'';
+
+SELECT @sql = @sql +
+    N'INSERT INTO #hallazgos SELECT N''' + REPLACE(s.name,'''','''''') + N''', N'''
+    + REPLACE(t.name,'''','''''') + N''', N''' + REPLACE(c.name,'''','''''')
+    + N''', COUNT_BIG(*) FROM ' + QUOTENAME(s.name) + N'.' + QUOTENAME(t.name)
+    + N' WITH (NOLOCK) WHERE ' + QUOTENAME(c.name) + N' = @v HAVING COUNT_BIG(*) > 0;'
+    + NCHAR(10)
+FROM sys.columns c
+JOIN sys.tables  t  ON t.object_id = c.object_id
+JOIN sys.schemas s  ON s.schema_id = t.schema_id
+JOIN sys.types   ty ON ty.user_type_id = c.user_type_id
+WHERE ty.name IN ('bigint','int','numeric','decimal')
+  AND c.name LIKE '%ID%';
+
+EXEC sp_executesql @sql, N'@v BIGINT', @v = @valor;
+
+SELECT * FROM #hallazgos ORDER BY coincidencias, tabla;
