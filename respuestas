@@ -1,86 +1,96 @@
-RESPUESTA: ¿Habría que hacer mejoras o las preguntas están bien?
+REVISIÓN DE PREGUNTAS CON BASE EN "Arquitectura compras Handelbay.jpg"
+(HandelBay - Transición)
 
-Las preguntas cubren los puntos del contexto y están bien orientadas, pero se pueden mejorar en tres aspectos para que sean más técnicas y no dejen espacio a respuestas genéricas:
+============================================================
+1. LO QUE MUESTRA EL DIAGRAMA (flujos clave)
+============================================================
+- Suppliers -> Web UI (React) de HandelBay ("Solicitan acceso"). Hay además una línea de Suppliers hacia el IdP Colfondos.
+- Usuarios internos -> IdP Colfondos (Entra ID, SAML 2.0 + MFA) -> Web UI por HTTPS/TLS 1.2+.
+- Web UI -> Rails API / Controllers (API Gateway) -> Módulo Proveedores (SARLAFT), Workflow y Aprobaciones, Módulo Compras y Contratos, Auditoría y trazabilidad.
+- Rails -> Adaptador Workflow Pagos (EN DESCUBRIMIENTO, rojo) -> HTTPS REST -> WorkFlow de pagos (Power Apps, Colfondos).
+- Módulo Proveedores -> Adaptador Vigia (nuevo) -> VPN s2s -> REST v3 con Token (Client Credential / Client ID) -> API REST Vigia - SoluSoft (Kyndryl Chile).
+- Jobs Sidekiq -> VPN s2s (nueva) -> SFTP -> GoAnywhere ("Interface Optimal y bancaria").
+- GoAnywhere -> IBM i-Core (Contabilidad y soporte a bancos).
+- GoAnywhere -> API REST -> Bucket HandelBay (AWS S3, "Glacier o Archive", Colfondos).
+- GoAnywhere -> API REST "Documento firmado" -> SoftExpert / Gestor Documental (AWS, Colfondos).
+- SignNow -> "Envía documento firmado" -> GoAnywhere (POR EVALUAR, amarillo).
+- HandelBay interno: S3 "Documentos y backups", PostgreSQL (JDBC/TLS), backups diarios cifrados.
+- Controles declarados: Audit Logging, TLS 1.2+, AES-256, Tenant Isolation. Operación: Monitoring, Logging, Alerting, CI/CD.
 
-1. Algunas preguntas tienen supuestos implícitos (ej. "Dado que el IBM i-Core no puede ser accedido..." o "Si los archivos terminan en el Bucket HandleBay..."). Es mejor pedir que el proveedor confirme el hecho primero.
-2. Varias preguntas son abiertas ("¿cómo se gestiona la seguridad?") y permiten respuestas como "está protegido". Conviene pedir el mecanismo concreto, la configuración y la evidencia.
-3. Falta pedir evidencia (diagramas, configuraciones, políticas, logs) y precisar el comportamiento ante fallas (qué pasa si se detecta malware, si expira una credencial, etc.).
+============================================================
+2. AJUSTES A LAS PREGUNTAS ORIGINALES SEGÚN EL DIAGRAMA
+============================================================
+- P3 (usuario de la Herramienta de Pagos) y P4 (AppSheet): son componentes de Colfondos. No son preguntas para el proveedor; pasan a la lista de controles internos (sección 4).
+- P5 (i-Core): el diagrama ya muestra que HandelBay no llega al Core; el acceso es GoAnywhere -> Core (todo Colfondos). Al proveedor solo se le pide confirmar que no tiene ninguna otra ruta ni credencial hacia el Core.
+- P7: el supuesto no se cumple. El proveedor NO escribe en el Bucket HandelBay: lo alimenta GoAnywhere (Colfondos). HandelBay entrega por SFTP (vía VPN) y consume Vigia por REST (vía VPN). La pregunta se reformula por flujo.
+- P8: el Workflow de pagos lo expone Colfondos. El control de autenticación lo define Colfondos; al proveedor se le pregunta cómo consumirá (credencial, IP, idempotencia).
+- P9: el Bucket HandelBay es de Colfondos y solo lo toca GoAnywhere. Es control interno, no pregunta al proveedor.
+- P1 y P2 siguen siendo críticas: el diagrama NO muestra ningún componente de antimalware ni WAF.
 
-Abajo va la versión mejorada, en el mismo orden.
+============================================================
+3. PREGUNTAS PARA EL PROVEEDOR (HandelBay)
+============================================================
 
-------------------------------------------------------------
-PREGUNTAS MEJORADAS
-------------------------------------------------------------
+A. Carga de archivos (Suppliers -> Web UI -> Rails -> S3 Documentos y backups)
+1. ¿Qué componente (Web UI, Rails API u otro) valida los archivos cargados por proveedores? Indicar: lista blanca de extensiones, validación del tipo real (MIME / firma del archivo), validación del lado servidor, límite de tamaño y qué queda registrado cuando se rechaza un archivo.
+2. El diagrama no muestra análisis de malware. ¿Qué servicio lo realiza, en qué punto del flujo (antes de guardar en S3 y antes de que Jobs Sidekiq lo transfiera por SFTP a Colfondos) y qué ocurre si detecta un archivo infectado (cuarentena, alerta, a quién se notifica)?
+3. ¿Existe un WAF delante de la Web UI / Rails API? ¿Cuál y con qué reglas?
 
-1. Restricción de carga de archivos
-¿Qué componente (frontend, API, gateway, WAF u otro) aplica la restricción de los archivos cargados? Indicar:
- a. Si la validación usa lista blanca de extensiones permitidas o lista negra, y cuáles son.
- b. Si se valida el tipo real del archivo (MIME / firma "magic bytes") o solo la extensión.
- c. Si la validación se hace del lado del servidor (no solo en el navegador).
- d. Límites de tamaño y número de archivos.
- e. Qué respuesta recibe el usuario y qué queda registrado cuando se rechaza un archivo.
+B. Identidad y acceso
+4. El diagrama muestra una línea de Suppliers hacia el IdP Colfondos. ¿Los proveedores externos se autentican en Entra ID de Colfondos (invitados B2B) o con cuentas locales de HandelBay? ¿Tienen MFA obligatorio? ¿Cómo es el alta, la baja y la recuperación de contraseña?
+5. Para usuarios internos (SAML 2.0 + MFA): ¿HandelBay permite algún inicio de sesión local alterno al SSO? ¿Cómo se asignan los roles (claims de Entra ID o configuración local)? ¿Qué pasa con la sesión cuando el usuario es deshabilitado en Entra ID?
 
-2. Análisis de malware
-¿Qué servicio o producto (nombre y versión) analiza los archivos cargados contra malware? Indicar:
- a. En qué punto exacto del flujo se ejecuta (antes de guardar, después de guardar en el bucket, antes de que un sistema lo consuma).
- b. Si el archivo queda disponible para otros componentes antes de que termine el análisis.
- c. Qué ocurre si se detecta malware (cuarentena, eliminación, alerta, a quién se notifica).
- d. Cada cuánto se actualizan las firmas o motores de detección.
+C. Adaptador Workflow Pagos (en descubrimiento)
+6. ¿Qué credencial usará el adaptador para consumir el WorkFlow de pagos (OAuth client credentials, certificado, otro)? ¿Dónde se almacena y cómo se rota?
+7. ¿Desde qué IPs de salida fijas se harán las llamadas?
+8. ¿Qué datos exactos envía ("Reporta pagos")?
+9. El adaptador tiene "timeout/retry": ¿cómo se garantiza la idempotencia para que un reintento no duplique un reporte de pago?
 
-3. Usuario de la Herramienta de Pagos
-¿Qué usuario técnico o cuenta de servicio usa la Herramienta de Pagos para consultar y gestionar los formularios de pago? Indicar:
- a. Si es una cuenta nominal, genérica o de servicio, y si es exclusiva de este uso.
- b. Qué permisos tiene exactamente (lectura, escritura, eliminación) y sobre qué recursos.
- c. Dónde se almacenan sus credenciales (bóveda de secretos, variables de entorno, código) y cada cuánto se rotan.
- d. Si sus accesos quedan auditados.
+D. VPN s2s y SFTP hacia GoAnywhere
+10. ¿La VPN s2s es exclusiva para Colfondos o compartida entre clientes (tenants) de la plataforma multi-tenant? ¿Qué hosts de HandelBay pueden usarla?
+11. ¿Qué tráfico pasa por la VPN? (según diagrama: SFTP a GoAnywhere y REST a Vigia). Confirmar que no habrá otros destinos ni puertos.
+12. Parámetros de la VPN: IKEv2, cifrado, PFS, quién administra el extremo del proveedor y su proveedor de nube.
+13. SFTP: ¿autenticación por llave o contraseña? ¿Un usuario por flujo? El diagrama muestra dos líneas SFTP: ¿quién inicia cada conexión y en qué dirección van los archivos?
+14. ¿Los archivos de la interfaz Optimal y bancaria van cifrados (PGP) y con verificación de integridad (hash)? ¿Qué validación de estructura se hace antes de enviarlos?
+15. Confirmar por escrito que HandelBay no tiene ninguna ruta ni credencial de acceso al IBM i-Core.
 
-4. AppSheet
-¿Cómo se gestiona la autenticación, autorización y control de acceso en AppSheet? Indicar:
- a. Proveedor de identidad usado (Google Workspace, Azure AD/Entra ID, otro) y si hay SSO y MFA obligatorio.
- b. Cómo se definen los roles y permisos, y si se usan filtros de seguridad por fila (security filters).
- c. Si la aplicación es accesible solo para usuarios del dominio de Colfondos o también para externos.
- d. Con qué cuenta se conecta AppSheet a sus fuentes de datos y qué permisos tiene.
- e. Cómo se da de alta y de baja a un usuario.
+E. Adaptador Vigia (listas restrictivas - SARLAFT)
+16. ¿Dónde se almacena el Client ID / secret del token, cada cuánto se rota y cuál es la vigencia del token?
+17. ¿Qué datos se envían a Vigia y qué se guarda en "Auditoría y trazabilidad" (resultado de la consulta)? ¿Cuánto tiempo se retiene y quién puede verlo?
 
-5. Integración con IBM i-Core
-¿Confirman que GoAnywhere no tiene acceso directo al IBM i-Core? Si es así, ¿qué componente actúa como intermediario y qué controles aplica (autenticación, validación de datos, registro de operaciones)? Si existe algún acceso directo, describir cuál, con qué usuario y con qué permisos.
+F. Firma electrónica y documentos
+18. ¿Quién invoca SignNow (cuenta de HandelBay o de Colfondos)? El flujo "Envía documento firmado" a GoAnywhere está por evaluar: ¿llega directo desde SignNow o pasa por HandelBay? ¿Cómo se valida la integridad de la firma?
+19. ¿Cuál es el criterio para usar API REST o SFTP? Entregar una tabla por flujo: origen, destino, mecanismo, tipo de dato y frecuencia.
 
-6. API REST vs. transferencia por VPN / GoAnywhere
-¿Qué criterio técnico define cuándo se usa API REST y cuándo transferencia de archivos por VPN/GoAnywhere (tipo de dato, volumen, frecuencia, sistema origen, requisito de tiempo real u otro)? Enviar el listado de flujos con el mecanismo usado por cada uno.
+G. Datos y controles en HandelBay
+20. El diagrama dice "DigitalOcean / AWS": ¿qué componentes están en cada proveedor y en qué región? ¿Qué subprocesadores tienen acceso a los datos?
+21. Tenant Isolation: ¿cómo se aíslan los datos de Colfondos (base de datos, esquema o filtro por tenant_id; bucket o prefijo S3)? Entregar evidencia.
+22. AES-256: ¿quién administra las llaves? ¿Hay llaves por cliente?
+23. "Documentos y backups": ¿cuánto se retienen los documentos y backups de Colfondos y cómo se eliminan al terminar el contrato?
+24. Audit Logging: ¿qué eventos se registran, cuánto se conservan y puede Colfondos recibirlos en su SIEM?
+25. Entregar: último pentest y estado de hallazgos, certificaciones (ISO 27001, SOC 2) y matriz de comunicaciones (origen, destino, protocolo, autenticación, cifrado, cuenta usada).
 
-7. Centralización del servicio
-¿Cuál es el destino final de los archivos de cada mecanismo (API REST y VPN/GoAnywhere)? Si todos terminan en el Bucket HandleBay, ¿cuál es la justificación técnica para mantener dos mecanismos en lugar de uno solo? ¿Se evaluó centralizarlo y qué impedimentos existen?
+============================================================
+4. CONTROLES A CARGO DE COLFONDOS (no preguntar al proveedor)
+============================================================
+- WorkFlow de pagos: definir cómo se expone al adaptador del proveedor (registro de aplicación en Entra ID + OAuth client credentials, API Management, lista blanca de IP).
+- Herramienta de Pagos (Power Apps / Power Automate): qué cuenta o conexión usa, con qué permisos.
+- AppSheet Cumplimiento: autenticación, roles, security filters, cuenta de conexión a BigQuery y el flujo "Apis Rest" desde Workflow.
+- GoAnywhere -> Bucket HandelBay: identidad IAM usada, bloqueo de acceso público, bucket policy, cifrado KMS, Object Lock y definir si es Glacier o Archive.
+- GoAnywhere -> IBM i-Core y -> SoftExpert: usuarios y permisos mínimos.
+- Antimalware en GoAnywhere sobre lo que llega del proveedor, antes de pasarlo al Core o al bucket (segunda capa).
+- Extremo Colfondos de la VPN: ACL que permita solo SFTP a GoAnywhere y HTTPS a Vigia.
+- API Vigia en Kyndryl Chile: revisar transferencia internacional de datos personales (Ley 1581) y requisitos de la Superfinanciera para servicios en la nube.
 
-8. Seguridad de las APIs del Workflow
-¿Cómo se garantiza que las APIs del Workflow solo sean consumidas por clientes autenticados y autorizados? Indicar:
- a. Mecanismo de autenticación (OAuth 2.0 / client credentials, JWT, mTLS, API key u otro).
- b. Si las APIs están detrás de un API Gateway y qué políticas aplica (rate limiting, validación de token, lista blanca de IP).
- c. Si las APIs están expuestas a internet o solo en red privada.
- d. Cómo se valida la autorización por operación (qué cliente puede llamar qué endpoint).
- e. Vigencia de los tokens y cómo se revocan.
-
-9. Seguridad del Bucket HandleBay
-¿Qué controles aseguran que el Bucket HandleBay esté cerrado y solo lo consuman los sistemas autorizados de Colfondos? Indicar:
- a. Si el acceso público está bloqueado a nivel de bucket y de cuenta.
- b. Políticas de acceso / IAM aplicadas y qué identidades tienen permiso (listado).
- c. Si el acceso es solo por red privada (private endpoint / VPC endpoint) o también por internet.
- d. Cifrado en reposo (y quién administra las llaves) y cifrado en tránsito.
- e. Si se usan URLs prefirmadas, con qué vigencia.
- f. Si los accesos al bucket quedan registrados y quién revisa esos registros.
-
-10. Consistencia de controles entre componentes
-¿La comunicación entre AppSheet, Workflow de Pagos, GoAnywhere y las APIs de HandleBay usa los mismos mecanismos de autenticación y autorización, o hay controles distintos por componente? Entregar una tabla con: origen, destino, protocolo, mecanismo de autenticación, cifrado en tránsito y cuenta usada.
-
-------------------------------------------------------------
-PREGUNTAS ADICIONALES SUGERIDAS
-------------------------------------------------------------
-
-11. ¿Existe un diagrama de arquitectura actualizado con los flujos de datos, zonas de red y puntos de control de seguridad? Solicitar copia.
-12. ¿Qué registros de auditoría (logs) genera cada componente, dónde se centralizan, cuánto tiempo se conservan y si se integran con el SOC/SIEM de Colfondos?
-13. ¿Cuál es el tiempo de retención de los archivos en el bucket y en GoAnywhere, y cómo se eliminan de forma segura?
-14. ¿Se han realizado pruebas de seguridad (pentest, análisis de vulnerabilidades) sobre la solución? Solicitar el último informe y el estado de los hallazgos.
-
-------------------------------------------------------------
-RECOMENDACIÓN
-------------------------------------------------------------
-Pedir al proveedor que responda por escrito, por cada pregunta, con: mecanismo usado, componente responsable y evidencia (captura de configuración, política o diagrama). Así se evitan respuestas generales y se puede verificar lo que dicen.
+============================================================
+5. OBSERVACIONES SOBRE EL DIAGRAMA
+============================================================
+- No hay componente de antimalware ni WAF.
+- La línea Suppliers -> IdP Colfondos no tiene etiqueta; no queda claro el mecanismo.
+- Los colores de las líneas (rojo, verde, amarillo) no están en la leyenda (la leyenda solo aplica a componentes).
+- SoftExpert tiene el texto de plantilla "Description of container role/responsibility".
+- Etiqueta suelta "Text" junto a Usuario interno.
+- Los módulos de Rails tienen "[Component: ]" sin tecnología.
+- Bucket HandelBay: "Glacier o Archive" sin definir.
+- "DigitalOcean / AWS" sin precisar qué va en cada uno.
+- Unificar el nombre: HandelBay (en las preguntas aparece "Handlebay").
