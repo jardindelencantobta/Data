@@ -1,1 +1,86 @@
-Conexión verificada. Aquí aparecerá la respuesta a la pregunta escrita en el archivo "preguntas".
+RESPUESTA: ¿Habría que hacer mejoras o las preguntas están bien?
+
+Las preguntas cubren los puntos del contexto y están bien orientadas, pero se pueden mejorar en tres aspectos para que sean más técnicas y no dejen espacio a respuestas genéricas:
+
+1. Algunas preguntas tienen supuestos implícitos (ej. "Dado que el IBM i-Core no puede ser accedido..." o "Si los archivos terminan en el Bucket HandleBay..."). Es mejor pedir que el proveedor confirme el hecho primero.
+2. Varias preguntas son abiertas ("¿cómo se gestiona la seguridad?") y permiten respuestas como "está protegido". Conviene pedir el mecanismo concreto, la configuración y la evidencia.
+3. Falta pedir evidencia (diagramas, configuraciones, políticas, logs) y precisar el comportamiento ante fallas (qué pasa si se detecta malware, si expira una credencial, etc.).
+
+Abajo va la versión mejorada, en el mismo orden.
+
+------------------------------------------------------------
+PREGUNTAS MEJORADAS
+------------------------------------------------------------
+
+1. Restricción de carga de archivos
+¿Qué componente (frontend, API, gateway, WAF u otro) aplica la restricción de los archivos cargados? Indicar:
+ a. Si la validación usa lista blanca de extensiones permitidas o lista negra, y cuáles son.
+ b. Si se valida el tipo real del archivo (MIME / firma "magic bytes") o solo la extensión.
+ c. Si la validación se hace del lado del servidor (no solo en el navegador).
+ d. Límites de tamaño y número de archivos.
+ e. Qué respuesta recibe el usuario y qué queda registrado cuando se rechaza un archivo.
+
+2. Análisis de malware
+¿Qué servicio o producto (nombre y versión) analiza los archivos cargados contra malware? Indicar:
+ a. En qué punto exacto del flujo se ejecuta (antes de guardar, después de guardar en el bucket, antes de que un sistema lo consuma).
+ b. Si el archivo queda disponible para otros componentes antes de que termine el análisis.
+ c. Qué ocurre si se detecta malware (cuarentena, eliminación, alerta, a quién se notifica).
+ d. Cada cuánto se actualizan las firmas o motores de detección.
+
+3. Usuario de la Herramienta de Pagos
+¿Qué usuario técnico o cuenta de servicio usa la Herramienta de Pagos para consultar y gestionar los formularios de pago? Indicar:
+ a. Si es una cuenta nominal, genérica o de servicio, y si es exclusiva de este uso.
+ b. Qué permisos tiene exactamente (lectura, escritura, eliminación) y sobre qué recursos.
+ c. Dónde se almacenan sus credenciales (bóveda de secretos, variables de entorno, código) y cada cuánto se rotan.
+ d. Si sus accesos quedan auditados.
+
+4. AppSheet
+¿Cómo se gestiona la autenticación, autorización y control de acceso en AppSheet? Indicar:
+ a. Proveedor de identidad usado (Google Workspace, Azure AD/Entra ID, otro) y si hay SSO y MFA obligatorio.
+ b. Cómo se definen los roles y permisos, y si se usan filtros de seguridad por fila (security filters).
+ c. Si la aplicación es accesible solo para usuarios del dominio de Colfondos o también para externos.
+ d. Con qué cuenta se conecta AppSheet a sus fuentes de datos y qué permisos tiene.
+ e. Cómo se da de alta y de baja a un usuario.
+
+5. Integración con IBM i-Core
+¿Confirman que GoAnywhere no tiene acceso directo al IBM i-Core? Si es así, ¿qué componente actúa como intermediario y qué controles aplica (autenticación, validación de datos, registro de operaciones)? Si existe algún acceso directo, describir cuál, con qué usuario y con qué permisos.
+
+6. API REST vs. transferencia por VPN / GoAnywhere
+¿Qué criterio técnico define cuándo se usa API REST y cuándo transferencia de archivos por VPN/GoAnywhere (tipo de dato, volumen, frecuencia, sistema origen, requisito de tiempo real u otro)? Enviar el listado de flujos con el mecanismo usado por cada uno.
+
+7. Centralización del servicio
+¿Cuál es el destino final de los archivos de cada mecanismo (API REST y VPN/GoAnywhere)? Si todos terminan en el Bucket HandleBay, ¿cuál es la justificación técnica para mantener dos mecanismos en lugar de uno solo? ¿Se evaluó centralizarlo y qué impedimentos existen?
+
+8. Seguridad de las APIs del Workflow
+¿Cómo se garantiza que las APIs del Workflow solo sean consumidas por clientes autenticados y autorizados? Indicar:
+ a. Mecanismo de autenticación (OAuth 2.0 / client credentials, JWT, mTLS, API key u otro).
+ b. Si las APIs están detrás de un API Gateway y qué políticas aplica (rate limiting, validación de token, lista blanca de IP).
+ c. Si las APIs están expuestas a internet o solo en red privada.
+ d. Cómo se valida la autorización por operación (qué cliente puede llamar qué endpoint).
+ e. Vigencia de los tokens y cómo se revocan.
+
+9. Seguridad del Bucket HandleBay
+¿Qué controles aseguran que el Bucket HandleBay esté cerrado y solo lo consuman los sistemas autorizados de Colfondos? Indicar:
+ a. Si el acceso público está bloqueado a nivel de bucket y de cuenta.
+ b. Políticas de acceso / IAM aplicadas y qué identidades tienen permiso (listado).
+ c. Si el acceso es solo por red privada (private endpoint / VPC endpoint) o también por internet.
+ d. Cifrado en reposo (y quién administra las llaves) y cifrado en tránsito.
+ e. Si se usan URLs prefirmadas, con qué vigencia.
+ f. Si los accesos al bucket quedan registrados y quién revisa esos registros.
+
+10. Consistencia de controles entre componentes
+¿La comunicación entre AppSheet, Workflow de Pagos, GoAnywhere y las APIs de HandleBay usa los mismos mecanismos de autenticación y autorización, o hay controles distintos por componente? Entregar una tabla con: origen, destino, protocolo, mecanismo de autenticación, cifrado en tránsito y cuenta usada.
+
+------------------------------------------------------------
+PREGUNTAS ADICIONALES SUGERIDAS
+------------------------------------------------------------
+
+11. ¿Existe un diagrama de arquitectura actualizado con los flujos de datos, zonas de red y puntos de control de seguridad? Solicitar copia.
+12. ¿Qué registros de auditoría (logs) genera cada componente, dónde se centralizan, cuánto tiempo se conservan y si se integran con el SOC/SIEM de Colfondos?
+13. ¿Cuál es el tiempo de retención de los archivos en el bucket y en GoAnywhere, y cómo se eliminan de forma segura?
+14. ¿Se han realizado pruebas de seguridad (pentest, análisis de vulnerabilidades) sobre la solución? Solicitar el último informe y el estado de los hallazgos.
+
+------------------------------------------------------------
+RECOMENDACIÓN
+------------------------------------------------------------
+Pedir al proveedor que responda por escrito, por cada pregunta, con: mecanismo usado, componente responsable y evidencia (captura de configuración, política o diagrama). Así se evitan respuestas generales y se puede verificar lo que dicen.
