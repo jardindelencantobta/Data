@@ -1,0 +1,130 @@
+flowchart TD
+
+A[Inicio Solicitud de Compra] --> B{Valor de la compra en SMMLV}
+
+%% <=4
+
+B -->|<=4| C1[Director]
+
+C1 --> D1{¿Tiene Excepciones?}
+
+D1 -->|Sí| E1[Gerente de Área]
+D1 -->|No| F1{¿Tiene Anticipo y/o Pago menor a 45 días?}
+
+F1 -->|Sí| G1["VP Administrativa y Financiera<br/>Aprobación Única"]
+
+F1 -->|No| H1{¿Tiene mínimo 1 cotización?}
+
+H1 -->|Sí| I1[Aprobación Director]
+H1 -->|No| E1
+
+%% >4 <=7
+
+B -->|>4 y <=7| C2[Director]
+
+C2 --> D2{¿Tiene Excepciones?}
+
+D2 -->|Sí| E2[VP o Reporte Directo a Presidencia]
+D2 -->|No| F2{¿Tiene Anticipo y/o Pago menor a 45 días?}
+
+F2 -->|Sí| G2["VP Administrativa y Financiera<br/>Aprobación Única"]
+
+F2 -->|No| H2{¿Tiene mínimo 2 cotizaciones?}
+
+H2 -->|Sí| I2[Aprobación Director]
+H2 -->|No| E2
+
+%% >7 <=38
+
+B -->|>7 y <=38| C3["Gerente o Director<br/>Reporte Directo a VP"]
+
+C3 --> D3{¿Tiene Excepciones?}
+
+D3 -->|Sí| E3[VP o Reporte Directo a Presidencia]
+
+D3 -->|No| F3{¿Tiene Anticipo y/o Pago menor a 45 días?}
+
+F3 -->|Sí| G3["VP Administrativa y Financiera<br/>Aprobación Única"]
+
+F3 -->|No| H3{¿Tiene mínimo 3 cotizaciones?}
+
+H3 -->|Sí| I3["Aprobación Gerente o Director<br/>Reporte Directo a VP"]
+
+H3 -->|No| E3
+
+%% >38 <=75
+
+B -->|>38 y <=75| C4[VP o Reporte Directo a Presidencia]
+
+C4 --> D4{¿Tiene Excepciones?}
+
+D4 -->|Sí| E4[Comité de Compras Local]
+
+D4 -->|No| F4{¿Tiene Anticipo y/o Pago menor a 45 días?}
+
+F4 -->|Sí| G4["VP Administrativa y Financiera<br/>Aprobación Única"]
+
+F4 -->|No| H4{¿Tiene mínimo 3 cotizaciones?}
+
+H4 -->|Sí| I4[Aprobación VP o Reporte Directo a Presidencia]
+
+H4 -->|No| E4
+
+%% >75 <=753
+
+B -->|>75 y <=753| C5[Comité de Compras Local]
+
+C5 --> D5{¿Tiene Excepciones?}
+
+D5 -->|Sí| E5[Comité de Compras Local]
+
+D5 -->|No| F5{¿Tiene Anticipo y/o Pago menor a 45 días?}
+
+F5 -->|Sí| G5["VP Administrativa y Financiera<br/>Aprobación Única"]
+
+F5 -->|No| H5{¿Tiene mínimo 3 cotizaciones?}
+
+H5 -->|Sí| I5[Aprobación Comité de Compras Local]
+
+H5 -->|No| E5
+
+%% >753 <=3765
+
+B -->|>753 y <=3765| C6[Comité de Compras Chile]
+
+C6 --> D6{¿Tiene Excepciones?}
+
+D6 -->|Sí| E6[Comité de Compras Chile]
+
+D6 -->|No| F6{¿Tiene Anticipo y/o Pago menor a 45 días?}
+
+F6 -->|Sí| G6["VP Administrativa y Financiera<br/>Aprobación Única"]
+
+F6 -->|No| H6{¿Tiene mínimo 3 cotizaciones?}
+
+H6 -->|Sí| I6[Aprobación Comité de Compras Chile]
+
+H6 -->|No| E6
+
+%% FIN
+
+E1 --> Z[Fin]
+E2 --> Z
+E3 --> Z
+E4 --> Z
+E5 --> Z
+E6 --> Z
+
+G1 --> Z
+G2 --> Z
+G3 --> Z
+G4 --> Z
+G5 --> Z
+G6 --> Z
+
+I1 --> Z
+I2 --> Z
+I3 --> Z
+I4 --> Z
+I5 --> Z
+I6 --> Z    
