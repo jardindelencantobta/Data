@@ -1,96 +1,25 @@
-REVISIÓN DE PREGUNTAS CON BASE EN "Arquitectura compras Handelbay.jpg"
-(HandelBay - Transición)
+RESPUESTA: Conversión del archivo "20261119 _Dom_EP_Ini Cambio aplicativo de compras.mpp" a Excel
 
-============================================================
-1. LO QUE MUESTRA EL DIAGRAMA (flujos clave)
-============================================================
-- Suppliers -> Web UI (React) de HandelBay ("Solicitan acceso"). Hay además una línea de Suppliers hacia el IdP Colfondos.
-- Usuarios internos -> IdP Colfondos (Entra ID, SAML 2.0 + MFA) -> Web UI por HTTPS/TLS 1.2+.
-- Web UI -> Rails API / Controllers (API Gateway) -> Módulo Proveedores (SARLAFT), Workflow y Aprobaciones, Módulo Compras y Contratos, Auditoría y trazabilidad.
-- Rails -> Adaptador Workflow Pagos (EN DESCUBRIMIENTO, rojo) -> HTTPS REST -> WorkFlow de pagos (Power Apps, Colfondos).
-- Módulo Proveedores -> Adaptador Vigia (nuevo) -> VPN s2s -> REST v3 con Token (Client Credential / Client ID) -> API REST Vigia - SoluSoft (Kyndryl Chile).
-- Jobs Sidekiq -> VPN s2s (nueva) -> SFTP -> GoAnywhere ("Interface Optimal y bancaria").
-- GoAnywhere -> IBM i-Core (Contabilidad y soporte a bancos).
-- GoAnywhere -> API REST -> Bucket HandelBay (AWS S3, "Glacier o Archive", Colfondos).
-- GoAnywhere -> API REST "Documento firmado" -> SoftExpert / Gestor Documental (AWS, Colfondos).
-- SignNow -> "Envía documento firmado" -> GoAnywhere (POR EVALUAR, amarillo).
-- HandelBay interno: S3 "Documentos y backups", PostgreSQL (JDBC/TLS), backups diarios cifrados.
-- Controles declarados: Audit Logging, TLS 1.2+, AES-256, Tenant Isolation. Operación: Monitoring, Logging, Alerting, CI/CD.
+Archivo generado: "20261119 _Dom_EP_Ini Cambio aplicativo de compras.xlsx" (en la raíz del repositorio).
+El .mpp original se conserva sin cambios.
 
-============================================================
-2. AJUSTES A LAS PREGUNTAS ORIGINALES SEGÚN EL DIAGRAMA
-============================================================
-- P3 (usuario de la Herramienta de Pagos) y P4 (AppSheet): son componentes de Colfondos. No son preguntas para el proveedor; pasan a la lista de controles internos (sección 4).
-- P5 (i-Core): el diagrama ya muestra que HandelBay no llega al Core; el acceso es GoAnywhere -> Core (todo Colfondos). Al proveedor solo se le pide confirmar que no tiene ninguna otra ruta ni credencial hacia el Core.
-- P7: el supuesto no se cumple. El proveedor NO escribe en el Bucket HandelBay: lo alimenta GoAnywhere (Colfondos). HandelBay entrega por SFTP (vía VPN) y consume Vigia por REST (vía VPN). La pregunta se reformula por flujo.
-- P8: el Workflow de pagos lo expone Colfondos. El control de autenticación lo define Colfondos; al proveedor se le pregunta cómo consumirá (credencial, IP, idempotencia).
-- P9: el Bucket HandelBay es de Colfondos y solo lo toca GoAnywhere. Es control interno, no pregunta al proveedor.
-- P1 y P2 siguen siendo críticas: el diagrama NO muestra ningún componente de antimalware ni WAF.
+Contenido del Excel (8 hojas):
+1. Proyecto: propiedades del proyecto (título, autor, fechas, configuración de moneda, calendario, etc.).
+2. Tareas: las 331 tareas con todos los campos que tienen datos en el .mpp (82 columnas):
+   - Id, Id único, EDT, nivel de esquema, nombre (con sangría por nivel; las tareas resumen en negrita y sombreadas).
+   - Predecesoras y sucesoras (con tipo de vínculo y posposición, como en Project), recursos.
+   - Duración, comienzo, fin, % completado, comienzo/fin real, duración real y restante.
+   - Campos personalizados con su alias: Líder TI, Salud, %Real_Base, Frt_Real, Desviación, Frt_Esper, %Esper_Base, Aplicativo, Responsable, además de Text4, Text5, Text6, Text10, Text16, Text17, Text21, Number1, Number3 y Contacto.
+   - Delimitaciones, márgenes de demora, fechas anticipadas/tardías, tipo de tarea, tramos de trabajo, etc.
+   - Notas de las tareas (32 tareas tienen notas).
+3. Diagrama de Gantt: barras por semana (01/09/2026 a 03/05/2027), avance completado en azul oscuro, tareas resumen en gris, hitos en rojo y la semana actual marcada.
+4. Recursos: los 2 recursos del archivo (no tienen nombre en el .mpp).
+5. Asignaciones: las 286 asignaciones con trabajo, trabajo real/restante, fechas y % completado. Todas están "sin recurso" (así vienen en el .mpp).
+6. Calendarios: los 6 calendarios con su horario laboral por día.
+7. Excepciones calendario: festivos y semanas laborales alternativas.
+8. Campos personalizados: tabla de equivalencia entre el campo de Project (Text1, Text2...) y su alias.
 
-============================================================
-3. PREGUNTAS PARA EL PROVEEDOR (HandelBay)
-============================================================
-
-A. Carga de archivos (Suppliers -> Web UI -> Rails -> S3 Documentos y backups)
-1. ¿Qué componente (Web UI, Rails API u otro) valida los archivos cargados por proveedores? Indicar: lista blanca de extensiones, validación del tipo real (MIME / firma del archivo), validación del lado servidor, límite de tamaño y qué queda registrado cuando se rechaza un archivo.
-2. El diagrama no muestra análisis de malware. ¿Qué servicio lo realiza, en qué punto del flujo (antes de guardar en S3 y antes de que Jobs Sidekiq lo transfiera por SFTP a Colfondos) y qué ocurre si detecta un archivo infectado (cuarentena, alerta, a quién se notifica)?
-3. ¿Existe un WAF delante de la Web UI / Rails API? ¿Cuál y con qué reglas?
-
-B. Identidad y acceso
-4. El diagrama muestra una línea de Suppliers hacia el IdP Colfondos. ¿Los proveedores externos se autentican en Entra ID de Colfondos (invitados B2B) o con cuentas locales de HandelBay? ¿Tienen MFA obligatorio? ¿Cómo es el alta, la baja y la recuperación de contraseña?
-5. Para usuarios internos (SAML 2.0 + MFA): ¿HandelBay permite algún inicio de sesión local alterno al SSO? ¿Cómo se asignan los roles (claims de Entra ID o configuración local)? ¿Qué pasa con la sesión cuando el usuario es deshabilitado en Entra ID?
-
-C. Adaptador Workflow Pagos (en descubrimiento)
-6. ¿Qué credencial usará el adaptador para consumir el WorkFlow de pagos (OAuth client credentials, certificado, otro)? ¿Dónde se almacena y cómo se rota?
-7. ¿Desde qué IPs de salida fijas se harán las llamadas?
-8. ¿Qué datos exactos envía ("Reporta pagos")?
-9. El adaptador tiene "timeout/retry": ¿cómo se garantiza la idempotencia para que un reintento no duplique un reporte de pago?
-
-D. VPN s2s y SFTP hacia GoAnywhere
-10. ¿La VPN s2s es exclusiva para Colfondos o compartida entre clientes (tenants) de la plataforma multi-tenant? ¿Qué hosts de HandelBay pueden usarla?
-11. ¿Qué tráfico pasa por la VPN? (según diagrama: SFTP a GoAnywhere y REST a Vigia). Confirmar que no habrá otros destinos ni puertos.
-12. Parámetros de la VPN: IKEv2, cifrado, PFS, quién administra el extremo del proveedor y su proveedor de nube.
-13. SFTP: ¿autenticación por llave o contraseña? ¿Un usuario por flujo? El diagrama muestra dos líneas SFTP: ¿quién inicia cada conexión y en qué dirección van los archivos?
-14. ¿Los archivos de la interfaz Optimal y bancaria van cifrados (PGP) y con verificación de integridad (hash)? ¿Qué validación de estructura se hace antes de enviarlos?
-15. Confirmar por escrito que HandelBay no tiene ninguna ruta ni credencial de acceso al IBM i-Core.
-
-E. Adaptador Vigia (listas restrictivas - SARLAFT)
-16. ¿Dónde se almacena el Client ID / secret del token, cada cuánto se rota y cuál es la vigencia del token?
-17. ¿Qué datos se envían a Vigia y qué se guarda en "Auditoría y trazabilidad" (resultado de la consulta)? ¿Cuánto tiempo se retiene y quién puede verlo?
-
-F. Firma electrónica y documentos
-18. ¿Quién invoca SignNow (cuenta de HandelBay o de Colfondos)? El flujo "Envía documento firmado" a GoAnywhere está por evaluar: ¿llega directo desde SignNow o pasa por HandelBay? ¿Cómo se valida la integridad de la firma?
-19. ¿Cuál es el criterio para usar API REST o SFTP? Entregar una tabla por flujo: origen, destino, mecanismo, tipo de dato y frecuencia.
-
-G. Datos y controles en HandelBay
-20. El diagrama dice "DigitalOcean / AWS": ¿qué componentes están en cada proveedor y en qué región? ¿Qué subprocesadores tienen acceso a los datos?
-21. Tenant Isolation: ¿cómo se aíslan los datos de Colfondos (base de datos, esquema o filtro por tenant_id; bucket o prefijo S3)? Entregar evidencia.
-22. AES-256: ¿quién administra las llaves? ¿Hay llaves por cliente?
-23. "Documentos y backups": ¿cuánto se retienen los documentos y backups de Colfondos y cómo se eliminan al terminar el contrato?
-24. Audit Logging: ¿qué eventos se registran, cuánto se conservan y puede Colfondos recibirlos en su SIEM?
-25. Entregar: último pentest y estado de hallazgos, certificaciones (ISO 27001, SOC 2) y matriz de comunicaciones (origen, destino, protocolo, autenticación, cifrado, cuenta usada).
-
-============================================================
-4. CONTROLES A CARGO DE COLFONDOS (no preguntar al proveedor)
-============================================================
-- WorkFlow de pagos: definir cómo se expone al adaptador del proveedor (registro de aplicación en Entra ID + OAuth client credentials, API Management, lista blanca de IP).
-- Herramienta de Pagos (Power Apps / Power Automate): qué cuenta o conexión usa, con qué permisos.
-- AppSheet Cumplimiento: autenticación, roles, security filters, cuenta de conexión a BigQuery y el flujo "Apis Rest" desde Workflow.
-- GoAnywhere -> Bucket HandelBay: identidad IAM usada, bloqueo de acceso público, bucket policy, cifrado KMS, Object Lock y definir si es Glacier o Archive.
-- GoAnywhere -> IBM i-Core y -> SoftExpert: usuarios y permisos mínimos.
-- Antimalware en GoAnywhere sobre lo que llega del proveedor, antes de pasarlo al Core o al bucket (segunda capa).
-- Extremo Colfondos de la VPN: ACL que permita solo SFTP a GoAnywhere y HTTPS a Vigia.
-- API Vigia en Kyndryl Chile: revisar transferencia internacional de datos personales (Ley 1581) y requisitos de la Superfinanciera para servicios en la nube.
-
-============================================================
-5. OBSERVACIONES SOBRE EL DIAGRAMA
-============================================================
-- No hay componente de antimalware ni WAF.
-- La línea Suppliers -> IdP Colfondos no tiene etiqueta; no queda claro el mecanismo.
-- Los colores de las líneas (rojo, verde, amarillo) no están en la leyenda (la leyenda solo aplica a componentes).
-- SoftExpert tiene el texto de plantilla "Description of container role/responsibility".
-- Etiqueta suelta "Text" junto a Usuario interno.
-- Los módulos de Rails tienen "[Component: ]" sin tecnología.
-- Bucket HandelBay: "Glacier o Archive" sin definir.
-- "DigitalOcean / AWS" sin precisar qué va en cada uno.
-- Unificar el nombre: HandelBay (en las preguntas aparece "Handlebay").
+Notas:
+- Los campos sin ningún dato en el .mpp (todos vacíos o en cero) no se incluyeron como columnas para no llenar el Excel de columnas vacías.
+- Las curvas de trabajo fase por fase (timephased) y el formato visual propio de Project (vistas, filtros, colores de barra) no son exportables a Excel; el Gantt de la hoja 3 es una reconstrucción a partir de las fechas y el avance.
+- El archivo no tiene línea base guardada (no hay comienzo/fin previsto).
