@@ -1,24 +1,23 @@
-Hola, quiero que me ayudes a revisar unos ajustes que se deben hacer en la herramienta de BIZAGI version 18.1.55 fall 2025, para tener en cuenta, estos son las solicitudes
-
-•	El sistema de Bizagi no permite la modificación de los datos ingresados por el representante de oficinas en la asesorías y radicaciones
-Que datos son los que requieren modificar, que formularios, que usuarios y/o roles, requiere aprobación del jefe inmediato, autorización del afiliado, validar si existe un rol que lo pueda hacer 
-2026-11-11= ROL es únicamente de admin de oficina y/o líder de atención presencial, se retira 
+colfondos hace la solicitu de la siguiente manera
 
 
-•	Radicaciones: Cuando por error humano en Bizagi se registra de manera errada datos como Fecha de siniestro, fecha de nacimiento, nombres, genero, tipo y número de documento de los beneficiarios, 
-información de invalidez como fecha de estructuración, origen de la invalidez; 
-se debe ingresar un caso a mesa de servicio para poder realizar la corrección, en promedio TI tarda de 2 a 5 días.
-Se debe confirmar que roles y/o usuarios podrán hacer los cambios, validar si requiere firma del afiliado por actualización “Corrección” de datos, validar si requiere aprobación del jefe inmediato,
-validar con el equipo de TI como hace el proceso de actualización
-2026-11-11= ROL es únicamente de admin de oficina y/o líder de atención presencial, confirmar el rol que tiene Yenifer Banoy y que usuarios cuentan con ese rol, 
-para evitar ampliación de permisos o en caso contrario crear perfil. No se requiere firma y/o aprobación del afiliado. Pantalla datos de los beneficiaros, información personal, invalidez 
+Nombre Rol / Grupo Entra ID	Modulo	Permiso Asignado
+HB_Requisiciones_ver	Requisiciones	Ver
+HB_Requisiciones_aprobar	Requisiciones	Aprobar
+HB_Requisiciones_config	Requisiciones	Configurar
+HB_Compras_ver	Compras	Ver
+HB_Compras_aprobar	Compras	Aprobar
+HB_Compras_config	Compras	Configurar
+HB_Presupuesto_ver	Presupuesto	Ver
+HB_Presupuesto_aprobar	Presupuesto	Aprobar
+HB_Presupuesto_config	Presupuesto	Configurar
 
 
-•	Incapacidades: Cuando se realiza radicación de solicitud de incapacidades por primera vez o certificados, Bizagi solicita diligenciar datos de contacto como Teléfono fijo, celular, 
-correo electrónico y dirección de residencia (los cuales no están marcados como campos obligatorios) si no se diligencia puntualmente el campo de teléfono fijo el aplicativo deja continuar con el siguiente paso, 
-pero al final rechaza la solicitud y debe volverse a ingresar desde ceros.
-Nos complace informarle que la solución ha sido implementada exitosamente en el ambiente de desarrollo. Ahora, solicitamos su amable colaboración para realizar las pruebas correspondientes y confirmar que es posible guardar los cambios aplicados al formulario sin errores.
+para la hoja de asignacion de usuario se utiliza
 
-En relación con el campo "Teléfono" en el portal de trabajo, le explicamos que aparece como no obligatorio debido a que existe una configuración en las acciones y validaciones del formulario que establece el campo como "No obligatorio" cuando el campo "Celular" contiene un valor.
 
-Si tiene alguna consulta adicional o requiere asistencia durante este proceso, no dude en contactarnos. Estamos aquí para apoyarle.
+Nombre Completo	Correo	SOEID	Cargo	Rol	VP
+
+
+el nombre del rol es lo que se va a crear en el ad, por lo cual se re  quiere inicialemntre una hoja donde se informe como se van a crear los roles y permiso desde el ad
+
