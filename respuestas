@@ -21,9 +21,9 @@ Archivos actualizados en la carpeta "Modelos de permisos":
    - "Mapeo Entra ID" ahora indica a qué grupos HB_ se agrega a una persona según su rol de negocio (ej. Aprobador de compras = HB_Compras_ver, HB_Compras_aprobar).
    - "Asignación de usuarios" con el formato de Colfondos (una fila por usuario y grupo).
 
-Punto pendiente importante:
-- En HandelBay, crear requisiciones y ejecutar compras depende del nivel de compras (Oficial, Teniente, Capitán), no de Ver/Aprobar/Configurar. Los 9 grupos solicitados no cubren esos niveles, así que con solo esos grupos nadie podría crear requisiciones ni órdenes de compra.
-- Propuesta (marcada en gris, por decidir con el proveedor): HB_Compras_oficial, HB_Compras_teniente y HB_Compras_capitan, o enviar el nivel en un atributo del usuario.
+Ajuste posterior:
+- Se retiraron del modelo los niveles Oficial, Teniente y Capitán, por ser referencias propias del proveedor. Los permisos quedan solo como Ver, Aprobar y Configurar por módulo (los 9 grupos HB_).
+- Las acciones operativas (crear requisición, generar OC, registrar recepción, etc.) se asumen incluidas en Ver. Confirmar con el proveedor.
 
 Otras recomendaciones:
 - Quien esté en _aprobar o _config debe estar también en _ver.
