@@ -1,25 +1,32 @@
-RESPUESTA: Conversión del archivo "20261119 _Dom_EP_Ini Cambio aplicativo de compras.mpp" a Excel
+RESPUESTA: Ajuste de los modelos de roles con la forma de solicitud de Colfondos
 
-Archivo generado: "20261119 _Dom_EP_Ini Cambio aplicativo de compras.xlsx" (en la raíz del repositorio).
-El .mpp original se conserva sin cambios.
+Lo que se tomó del archivo "preguntas":
+- Los roles se crean en Entra ID / AD como 9 grupos, uno por módulo y permiso:
+  HB_Requisiciones_ver / _aprobar / _config
+  HB_Compras_ver / _aprobar / _config
+  HB_Presupuesto_ver / _aprobar / _config
+- La hoja de asignación usa: Nombre Completo, Correo, SOEID, Cargo, Rol, VP. El Rol es el nombre del grupo.
+- Se requiere una hoja que explique cómo se crean los roles y permisos desde el AD.
 
-Contenido del Excel (8 hojas):
-1. Proyecto: propiedades del proyecto (título, autor, fechas, configuración de moneda, calendario, etc.).
-2. Tareas: las 331 tareas con todos los campos que tienen datos en el .mpp (82 columnas):
-   - Id, Id único, EDT, nivel de esquema, nombre (con sangría por nivel; las tareas resumen en negrita y sombreadas).
-   - Predecesoras y sucesoras (con tipo de vínculo y posposición, como en Project), recursos.
-   - Duración, comienzo, fin, % completado, comienzo/fin real, duración real y restante.
-   - Campos personalizados con su alias: Líder TI, Salud, %Real_Base, Frt_Real, Desviación, Frt_Esper, %Esper_Base, Aplicativo, Responsable, además de Text4, Text5, Text6, Text10, Text16, Text17, Text21, Number1, Number3 y Contacto.
-   - Delimitaciones, márgenes de demora, fechas anticipadas/tardías, tipo de tarea, tramos de trabajo, etc.
-   - Notas de las tareas (32 tareas tienen notas).
-3. Diagrama de Gantt: barras por semana (01/09/2026 a 03/05/2027), avance completado en azul oscuro, tareas resumen en gris, hitos en rojo y la semana actual marcada.
-4. Recursos: los 2 recursos del archivo (no tienen nombre en el .mpp).
-5. Asignaciones: las 286 asignaciones con trabajo, trabajo real/restante, fechas y % completado. Todas están "sin recurso" (así vienen en el .mpp).
-6. Calendarios: los 6 calendarios con su horario laboral por día.
-7. Excepciones calendario: festivos y semanas laborales alternativas.
-8. Campos personalizados: tabla de equivalencia entre el campo de Project (Text1, Text2...) y su alias.
+Archivos actualizados en la carpeta "Modelos de permisos":
 
-Notas:
-- Los campos sin ningún dato en el .mpp (todos vacíos o en cero) no se incluyeron como columnas para no llenar el Excel de columnas vacías.
-- Las curvas de trabajo fase por fase (timephased) y el formato visual propio de Project (vistas, filtros, colores de barra) no son exportables a Excel; el Gantt de la hoja 3 es una reconstrucción a partir de las fechas y el avance.
-- El archivo no tiene línea base guardada (no hay comienzo/fin previsto).
+1. Creacion_roles_Entra_ID_HandelBay.xlsx (NUEVO, consolidado de los 3 módulos)
+   - Hoja "Creación de roles en AD": los 9 grupos con módulo, permiso, efecto en HandelBay (user_module_access), tipo de grupo, membresía, asignación a la aplicación empresarial, valor enviado en el token, y columnas para propietario del grupo y aprobador de altas (por diligenciar).
+   - Procedimiento de 8 pasos: creación de grupos, asignación a la aplicación SSO, configuración del claim de grupos, entrega del mapeo al proveedor, altas, bajas y recertificación.
+   - Hoja "Asignación de usuarios" con las columnas exactas de Colfondos. Rol se elige de una lista con los 9 grupos.
+     Validaciones con colores: rojo si un usuario tiene _aprobar y _config del mismo módulo; amarillo oscuro si tiene _aprobar o _config sin _ver; naranja si la fila está duplicada.
+
+2. Modelo_permisos_Requisiciones.xlsx, Modelo_permisos_Compras.xlsx, Modelo_permisos_Presupuestos.xlsx
+   - Nueva hoja "Creación de roles en AD" con los 3 grupos del módulo.
+   - "Mapeo Entra ID" ahora indica a qué grupos HB_ se agrega a una persona según su rol de negocio (ej. Aprobador de compras = HB_Compras_ver, HB_Compras_aprobar).
+   - "Asignación de usuarios" con el formato de Colfondos (una fila por usuario y grupo).
+
+Punto pendiente importante:
+- En HandelBay, crear requisiciones y ejecutar compras depende del nivel de compras (Oficial, Teniente, Capitán), no de Ver/Aprobar/Configurar. Los 9 grupos solicitados no cubren esos niveles, así que con solo esos grupos nadie podría crear requisiciones ni órdenes de compra.
+- Propuesta (marcada en gris, por decidir con el proveedor): HB_Compras_oficial, HB_Compras_teniente y HB_Compras_capitan, o enviar el nivel en un atributo del usuario.
+
+Otras recomendaciones:
+- Quien esté en _aprobar o _config debe estar también en _ver.
+- No anidar grupos: la asignación de aplicaciones en Entra ID no hereda miembros de grupos anidados.
+- Enviar en el token el Object ID del grupo y solo los grupos asignados a la aplicación.
+- Confirmar con el proveedor cuánto tarda en aplicarse una baja (próximo inicio de sesión o SCIM).
